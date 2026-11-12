@@ -1,0 +1,2105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OBSERV AGENT — live intelligence for Robinhood Chain</title>
+<meta name="description" content="Live AI observatory for Robinhood Chain: token launches across launchpads, threat signals, genesis certificates and an AI agent.">
+<link rel="icon" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Archivo+Narrow:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#e8e6e0; --paper2:#f3f2ee; --ink:#121212; --ink2:#3a3a3a; --dim:#77756f; --rule:#121212;
+    --mono:'IBM Plex Mono', ui-monospace, monospace; --narrow:'Archivo Narrow', sans-serif;
+    --dash:292px; --head:46px; --cabar:44px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);font-family:var(--mono)}
+  #grain{position:fixed;inset:0;pointer-events:none;z-index:50;mix-blend-mode:multiply;opacity:.38}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:49;
+    background:radial-gradient(ellipse at 60% 40%, transparent 50%, rgba(0,0,0,.18) 100%)}
+
+  /* header */
+  header{position:fixed;top:0;left:0;right:0;height:var(--head);display:flex;align-items:stretch;border-bottom:1.5px solid var(--rule);background:var(--paper);z-index:10}
+  header .logo{display:flex;align-items:center;gap:10px;padding:0 16px;border-right:1.5px solid var(--rule);font-family:var(--narrow);font-weight:700;font-size:15px;letter-spacing:.12em;white-space:nowrap}
+  header .logo i{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,#000 30%,transparent 32%),repeating-radial-gradient(circle,#000 0 1px,transparent 1px 3px)}
+  .hc{display:flex;flex-direction:column;justify-content:center;padding:0 14px;border-right:1px solid rgba(0,0,0,.25);min-width:92px}
+  .hc label{font-size:9px;letter-spacing:.16em;color:var(--dim)}
+  .hc b{font-size:12.5px;font-weight:600;letter-spacing:.02em;margin-top:2px;white-space:nowrap}
+  .hsp{flex:1}
+  .hstat{display:flex;align-items:center;gap:8px;padding:0 16px;font-size:11px;letter-spacing:.12em;border-left:1.5px solid var(--rule)}
+  .hstat i{width:8px;height:8px;background:var(--ink);animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* ticker */
+  .ticker{position:fixed;top:calc(var(--head) + var(--cabar));left:0;right:0;height:22px;border-bottom:1px solid var(--rule);background:var(--paper2);z-index:9;overflow:hidden;white-space:nowrap;font-size:10px;letter-spacing:.08em;display:flex;align-items:center}
+  .ticker .lab{background:var(--ink);color:var(--paper2);height:100%;display:flex;align-items:center;padding:0 10px;font-weight:700;flex:none;position:relative;z-index:2}
+  .ticker .run{display:inline-block;padding-left:12px}
+  .ticker .run span{margin-right:26px}
+  .ticker .run span b{font-weight:700}
+
+  /* stage */
+  #stage{position:fixed;top:calc(var(--head) + var(--cabar) + 22px);left:0;right:0;bottom:var(--dash)}
+  #links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4}
+  .log{position:absolute;z-index:5;left:14px;top:30px;width:230px;font-size:9px;line-height:1.45;color:var(--ink2);pointer-events:none;
+    -webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent)}
+  .log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .log div.hi{color:var(--ink);font-weight:700}
+  /* ASK AI — main feature */
+  .ask{position:absolute;z-index:8;left:50%;bottom:14px;transform:translateX(-50%);width:min(620px,calc(100% - 28px))}
+  .ask-in{display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--paper2);padding:0 0 0 14px;height:50px;position:relative;
+    box-shadow:6px 6px 0 rgba(18,18,18,.25)}
+  .ask-in::before{content:"";position:absolute;inset:-4px;border:1px dashed var(--ink);pointer-events:none;animation:march 12s linear infinite}
+  @keyframes march{to{transform:rotate(.0001deg)}}
+  .spark{width:20px;height:20px;flex:none;display:grid;place-items:center;font-size:17px;animation:spin 6s linear infinite}
+  .ask.thinking .spark{animation-duration:.8s}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ask-in b{font-family:var(--narrow);font-size:15px;letter-spacing:.14em;white-space:nowrap}
+  .ask-in input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--paper2);font-family:var(--mono);font-size:13px;padding:0 4px}
+  .ask-in input::placeholder{color:#8a887f}
+  .ask-in button{height:100%;background:var(--paper2);color:var(--ink);border:0;font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.14em;padding:0 16px;cursor:pointer}
+  .ask-in button:hover{background:#fff}
+  .ask-sug{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;justify-content:center}
+  .ask-sug button{font-family:var(--mono);font-size:10px;background:var(--paper2);border:1px solid var(--ink);color:var(--ink);padding:4px 9px;cursor:pointer;letter-spacing:.02em}
+  .ask-sug button:hover{background:var(--ink);color:var(--paper2)}
+  .ask-out{background:var(--paper2);border:1.5px solid var(--ink);margin-bottom:10px;box-shadow:8px 8px 0 var(--ink);max-height:min(46vh,360px);display:flex;flex-direction:column}
+  .ask-h{display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:var(--paper2);padding:6px 10px;font-size:9.5px;letter-spacing:.16em;flex:none}
+  .ask-h button{background:none;border:1px solid var(--paper2);color:var(--paper2);font-family:var(--mono);font-size:9.5px;padding:2px 7px;cursor:pointer;margin-left:6px;letter-spacing:.08em}
+  .ask-h button:hover{background:var(--paper2);color:var(--ink)}
+  .ask-body{overflow:auto;padding:10px 12px}
+  .ask-q{font-size:11px;color:var(--ink2);margin-bottom:6px}
+  .ask-q::before{content:"› "}
+  .ask-tools{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+  .ask-tools span{font-size:9.5px;border:1px solid var(--ink);padding:2px 6px;letter-spacing:.02em}
+  .ask-tools span.done{background:var(--ink);color:var(--paper2)}
+  .ask-a{font-size:13px;line-height:1.65;white-space:pre-wrap}
+  .ask-a b{text-decoration:underline;text-underline-offset:3px}
+  .ask-a .caret{background:var(--ink)}
+  .ask-mode{font-size:9px;color:var(--ink2);letter-spacing:.1em;margin-top:8px;border-top:1px dashed rgba(0,0,0,.3);padding-top:6px}
+  @media (max-width:760px){ .ask-in b{display:none} .ask-sug{display:none} .ask{bottom:8px} }
+
+  .agents{position:absolute;z-index:6;right:14px;top:12px;width:300px;background:var(--paper2);border:1.5px solid var(--ink);font-size:10px}
+  .agents .ah{background:var(--ink);color:var(--paper2);padding:5px 8px;letter-spacing:.14em;display:flex;justify-content:space-between}
+  .agents .row{display:grid;grid-template-columns:34px 74px 1fr 46px;gap:6px;align-items:center;padding:4px 8px;border-bottom:1px dashed rgba(0,0,0,.25)}
+  .agents .row:last-child{border-bottom:0}
+  .agents .row b{font-weight:700}
+  .agents .row .st{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--ink2)}
+  .agents .bar{height:6px;border:1px solid var(--ink);position:relative}
+  .agents .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ink)}
+  .agents .row.busy b::after{content:" ●";animation:blink .5s steps(1) infinite}
+  #xhair{position:fixed;z-index:7;pointer-events:none;font-size:9px;letter-spacing:.08em;color:var(--ink);display:none}
+  #xhair::before,#xhair::after{content:"";position:absolute;background:var(--ink)}
+  #xhair::before{left:-9px;top:-1px;width:18px;height:1px}
+  #xhair::after{left:-1px;top:-9px;width:1px;height:18px}
+  #xhair span{position:absolute;left:10px;top:8px;white-space:nowrap;background:var(--paper2);padding:1px 4px;border:1px solid var(--ink)}
+  #stage canvas{display:block;width:100%;height:100%}
+  .tag{position:absolute;z-index:5;pointer-events:none;background:var(--ink);color:var(--paper2);font-size:10px;line-height:1.25;
+    padding:4px 7px 4px 7px;letter-spacing:.06em;white-space:nowrap;transform:translate(14px,-50%)}
+  .tag small{display:block;color:#a9a7a0;font-size:8.5px;letter-spacing:.1em}
+  .tag::before{content:"";position:absolute;left:-14px;top:50%;width:14px;height:1px;background:var(--ink)}
+  .tag::after{content:"";position:absolute;left:-18px;top:50%;width:7px;height:7px;margin-top:-3.5px;background:var(--paper2);border:1.5px solid var(--ink)}
+  .corner{position:fixed;z-index:6;font-size:9.5px;letter-spacing:.14em;color:var(--ink2);pointer-events:none}
+
+  /* dashboard */
+  .dash{position:fixed;left:0;right:0;bottom:0;height:var(--dash);background:var(--paper);border-top:1.5px solid var(--rule);z-index:10;display:flex;flex-direction:column}
+  .cmd{background:var(--ink);color:var(--paper2);display:flex;align-items:center;gap:10px;padding:0 14px;height:30px;font-size:11.5px;overflow:hidden}
+  .cmd .pr{color:#9d9b94;white-space:nowrap}
+  .cmd .tx{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cmd .tx b{font-weight:700;text-decoration:underline;text-underline-offset:3px}
+  .cmd .note{color:#9d9b94;font-size:9.5px;letter-spacing:.14em;white-space:nowrap}
+  .caret{display:inline-block;width:7px;height:13px;background:var(--paper2);vertical-align:-2px;animation:blink .7s steps(1) infinite}
+  .inp{display:flex;align-items:center;border-bottom:1.5px solid var(--rule);height:40px}
+  .inp form{flex:1;display:flex;align-items:center;gap:8px;padding:0 14px;height:100%}
+  .inp form span{font-weight:700}
+  .inp input{flex:1;background:none;border:0;outline:0;font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+  .inp input::placeholder{color:#8f8d86}
+  .chip{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:none;border:1px solid var(--ink);color:var(--ink);padding:5px 9px;cursor:pointer;margin-right:8px;white-space:nowrap}
+  .chip:hover,.go:hover{background:var(--ink);color:var(--paper2)}
+  .go{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;background:none;border:0;border-left:1.5px solid var(--ink);height:100%;padding:0 16px;cursor:pointer;color:var(--ink)}
+  .chips{display:flex;align-items:center;padding-right:6px}
+  .grid{flex:1;display:grid;grid-template-columns:repeat(6,1fr);min-height:0}
+  .card{border-right:1px solid rgba(0,0,0,.28);padding:12px 14px;display:flex;flex-direction:column;min-width:0;position:relative}
+  .card:last-child{border-right:0}
+  .card label{font-size:9px;letter-spacing:.16em;color:var(--dim);display:flex;justify-content:space-between}
+  .card .n{font-family:var(--narrow);font-weight:700;font-size:38px;line-height:1;margin-top:10px;letter-spacing:-.01em}
+  .card .s{font-size:9.5px;color:var(--ink2);margin-top:4px;letter-spacing:.06em}
+  .card canvas{width:100%;flex:1;min-height:0;margin-top:10px;display:block}
+
+  /* result */
+  .result{position:fixed;z-index:20;right:22px;top:calc(var(--head) + var(--cabar) + 40px);width:min(420px,calc(100% - 28px));max-height:calc(100% - var(--head) - var(--cabar) - var(--dash) - 58px);overflow:auto;
+    background:var(--paper2);border:1.5px solid var(--ink);box-shadow:8px 8px 0 var(--ink);display:none}
+  .result .rh{display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:var(--paper2);padding:7px 12px;font-size:10.5px;letter-spacing:.16em}
+  .result .rh button{background:none;border:0;color:var(--paper2);font-family:var(--mono);cursor:pointer;font-size:10.5px;letter-spacing:.1em}
+  .steps{padding:10px 12px;font-size:11px;display:grid;gap:4px;border-bottom:1px dashed rgba(0,0,0,.35);color:var(--dim)}
+  .steps .ok{color:var(--ink)}
+  .rb{padding:12px;font-size:12.5px;line-height:1.6}
+  .rb b{text-decoration:underline;text-underline-offset:3px}
+  .kv{display:grid;grid-template-columns:118px 1fr;margin-top:10px;border:1px solid var(--ink);font-size:11px}
+  .kv div{padding:6px 8px;border-bottom:1px solid rgba(0,0,0,.2)}
+  .kv div:nth-child(odd){background:var(--ink);color:var(--paper2);letter-spacing:.08em;font-size:9.5px;border-bottom-color:#333}
+  .warn{margin-top:10px;font-size:10px;letter-spacing:.04em;color:var(--ink2);border-left:3px solid var(--ink);padding-left:8px}
+
+  .tag.click{pointer-events:auto;cursor:pointer}
+  .tag.click:hover{background:var(--paper2);color:var(--ink);outline:1.5px solid var(--ink)}
+  .tag.click small::after{content:"  ▸ GENESIS"}
+  .hbtn{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.14em;background:none;border:0;border-left:1.5px solid var(--rule);padding:0 14px;cursor:pointer;color:var(--ink)}
+  .hbtn:hover{background:var(--ink);color:var(--paper2)}
+
+  /* modal */
+  .modal{position:fixed;inset:0;z-index:40;background:rgba(18,18,18,.42);display:none;align-items:center;justify-content:center;padding:18px}
+  .sheet{background:var(--paper2);border:1.5px solid var(--ink);box-shadow:10px 10px 0 var(--ink);width:min(860px,100%);max-height:100%;overflow:auto;position:relative}
+  .sheet .bar{display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:var(--paper2);padding:7px 12px;font-size:10px;letter-spacing:.16em;position:sticky;top:0;z-index:2}
+  .sheet .bar button{background:none;border:1px solid var(--paper2);color:var(--paper2);font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:3px 8px;cursor:pointer;margin-left:6px}
+  .sheet .bar button:hover{background:var(--paper2);color:var(--ink)}
+
+  /* certificate */
+  .cert{margin:16px;border:1.5px solid var(--ink);padding:6px;background:
+      repeating-linear-gradient(45deg, rgba(0,0,0,.035) 0 1px, transparent 1px 6px), var(--paper2)}
+  .cert-in{border:1px solid var(--ink);padding:22px 26px;position:relative}
+  .cert .top{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.18em;color:var(--ink2)}
+  .cert h3{font-family:var(--narrow);font-weight:700;font-size:13px;letter-spacing:.42em;text-align:center;margin-top:16px}
+  .cert .nm{font-family:var(--narrow);font-weight:700;font-size:clamp(44px,8vw,78px);text-align:center;line-height:1;margin:10px 0 4px;letter-spacing:.01em}
+  .cert .sub{text-align:center;font-size:10px;letter-spacing:.2em;color:var(--ink2)}
+  .cert .body{display:grid;grid-template-columns:150px 1fr 150px;gap:22px;margin-top:22px;align-items:start}
+  .cert .fields{display:grid;grid-template-columns:118px 1fr;font-size:11px;border-top:1px solid var(--ink)}
+  .cert .fields div{padding:6px 4px;border-bottom:1px solid rgba(0,0,0,.22)}
+  .cert .fields div:nth-child(odd){font-size:9px;letter-spacing:.14em;color:var(--ink2);padding-top:8px}
+  .pbar{height:9px;border:1px solid var(--ink);position:relative;margin-top:3px}
+  .pbar i{position:absolute;left:0;top:0;bottom:0;background:var(--ink)}
+  .cert .lbl{font-size:8.5px;letter-spacing:.16em;color:var(--ink2);text-align:center;margin-top:6px}
+  .cert canvas{width:150px;height:150px;display:block;border:1px solid var(--ink)}
+  .cert .foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:22px;font-size:9.5px;color:var(--ink2);letter-spacing:.06em;gap:20px}
+  .cert .sign{text-align:center;min-width:180px}
+  .cert .sign div{border-top:1px solid var(--ink);padding-top:4px;margin-top:26px;letter-spacing:.14em;font-size:9px}
+  .cert .sign em{font-family:var(--narrow);font-style:italic;font-size:20px;color:var(--ink)}
+
+  /* daily */
+  .paper{padding:20px 24px 24px}
+  .mast{text-align:center;border-bottom:3px double var(--ink);padding-bottom:8px}
+  .mast .ear{display:flex;justify-content:space-between;font-size:9px;letter-spacing:.16em;color:var(--ink2)}
+  .mast h2{font-family:var(--narrow);font-weight:700;font-size:clamp(40px,8vw,74px);letter-spacing:.02em;line-height:1;margin:6px 0 4px}
+  .mast .dl{display:flex;justify-content:space-between;border-top:1px solid var(--ink);padding-top:5px;font-size:10px;letter-spacing:.12em}
+  .hl{font-family:var(--narrow);font-weight:700;font-size:clamp(24px,3.6vw,36px);line-height:1.08;margin:16px 0 12px;text-align:center}
+  .cols{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:0;border-top:1px solid var(--ink)}
+  .cols > div{padding:12px 14px;border-right:1px solid var(--ink)}
+  .cols > div:last-child{border-right:0}
+  .cols h4{font-size:9.5px;letter-spacing:.18em;border-bottom:1px solid var(--ink);padding-bottom:4px;margin-bottom:8px}
+  .big{margin-bottom:10px}
+  .big b{display:block;font-family:var(--narrow);font-weight:700;font-size:28px;line-height:1}
+  .big span{font-size:9.5px;letter-spacing:.1em;color:var(--ink2)}
+  .ed{font-size:12.5px;line-height:1.7;text-align:justify}
+  .ed p{margin-bottom:10px}
+  .ed p:first-child::first-letter{font-family:var(--narrow);font-weight:700;font-size:44px;float:left;line-height:.85;margin:4px 6px 0 0}
+  .hb{display:grid;grid-template-columns:44px 1fr 38px;gap:6px;align-items:center;font-size:10.5px;margin-bottom:5px}
+  .hb .t{height:9px;background:rgba(0,0,0,.1)} .hb .t i{display:block;height:100%;background:var(--ink)}
+  .hours{display:flex;align-items:flex-end;gap:2px;height:70px;margin-top:6px;border-bottom:1px solid var(--ink)}
+  .hours i{flex:1;background:var(--ink)}
+  .born{font-size:10.5px;line-height:1.7}
+  .born div{display:flex;justify-content:space-between;border-bottom:1px dotted rgba(0,0,0,.3)}
+  .disc{margin-top:14px;border-top:1px solid var(--ink);padding-top:6px;font-size:9.5px;color:var(--ink2);letter-spacing:.04em;text-align:center}
+
+  /* roadmap */
+  .rm{padding:20px 24px 26px}
+  .rm h2{font-family:var(--narrow);font-weight:700;font-size:40px;line-height:1}
+  .rm .lead{font-size:11px;color:var(--ink2);margin-top:6px;letter-spacing:.04em}
+  .phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-top:20px;border:1.5px solid var(--ink)}
+  .ph{border-right:1px solid var(--ink);display:flex;flex-direction:column}
+  .ph:last-child{border-right:0}
+  .ph .h{padding:10px 12px;border-bottom:1px solid var(--ink)}
+  .ph .h small{font-size:9px;letter-spacing:.18em;color:var(--ink2)}
+  .ph .h b{display:block;font-family:var(--narrow);font-size:20px;margin-top:2px}
+  .ph.now .h{background:var(--ink);color:var(--paper2)} .ph.now .h small{color:#a9a7a0}
+  .ph ul{list-style:none;padding:10px 12px;display:grid;gap:10px}
+  .ph li{font-size:11px;line-height:1.5}
+  .ph li b{display:block;font-size:11.5px}
+  .ph li span{color:var(--ink2)}
+  .ph li .st{display:inline-block;font-size:8.5px;letter-spacing:.14em;border:1px solid var(--ink);padding:1px 5px;margin-top:3px}
+  .ph li .st.on{background:var(--ink);color:var(--paper2)}
+  @media (max-width:760px){
+    .cert .body{grid-template-columns:1fr} .cert canvas{margin:0 auto}
+    .cols{grid-template-columns:1fr} .cols > div{border-right:0;border-bottom:1px solid var(--ink)}
+    .phases{grid-template-columns:1fr 1fr} .ph{border-bottom:1px solid var(--ink)}
+    .hbtn{padding:0 9px;letter-spacing:.06em}
+  }
+
+  /* threat */
+  .tag.threat{background:repeating-linear-gradient(-45deg,#121212 0 6px,#2b2b2b 6px 12px);outline:2px solid var(--ink);outline-offset:2px;animation:tflash 1s steps(1) 3}
+  .tag.threat small{color:#e0ded7}
+  @keyframes tflash{50%{background:var(--paper2);color:var(--ink)}}
+  .hc.warnc b{display:flex;align-items:center;gap:6px}
+  .hc.warnc b::before{content:"";width:9px;height:9px;background:repeating-linear-gradient(-45deg,#121212 0 2px,transparent 2px 4px);border:1px solid var(--ink)}
+  .tscan{margin:0 16px 16px;border:1.5px solid var(--ink)}
+  .tscan .th{display:flex;justify-content:space-between;align-items:center;background:repeating-linear-gradient(-45deg,#121212 0 8px,#262626 8px 16px);color:var(--paper2);padding:7px 12px;font-size:10px;letter-spacing:.18em}
+  .tscan .tb{display:grid;grid-template-columns:190px 1fr;gap:0}
+  .tgauge{padding:14px;border-right:1px solid var(--ink);text-align:center}
+  .tgauge .sc{font-family:var(--narrow);font-weight:700;font-size:64px;line-height:1}
+  .tgauge .lv{display:inline-block;margin-top:6px;font-size:10px;letter-spacing:.2em;padding:3px 8px;border:1.5px solid var(--ink)}
+  .tgauge .lv.hi{background:var(--ink);color:var(--paper2)}
+  .segs{display:grid;grid-template-columns:repeat(20,1fr);gap:2px;margin-top:12px}
+  .segs i{height:12px;border:1px solid var(--ink)}
+  .segs i.on{background:var(--ink)}
+  .tgauge small{display:block;margin-top:8px;font-size:9px;color:var(--ink2);letter-spacing:.06em;line-height:1.4}
+  .tlist{padding:8px 12px;font-size:11px}
+  .tlist .f{display:grid;grid-template-columns:22px 1fr 34px;gap:8px;padding:6px 0;border-bottom:1px dashed rgba(0,0,0,.25);align-items:start}
+  .tlist .f:last-child{border-bottom:0}
+  .tlist .f .ic{font-weight:700;text-align:center;border:1.5px solid var(--ink);line-height:16px;height:18px}
+  .tlist .f.bad .ic{background:var(--ink);color:var(--paper2)}
+  .tlist .f b{display:block;font-size:10.5px;letter-spacing:.1em}
+  .tlist .f span{color:var(--ink2);line-height:1.45}
+  .tlist .f em{font-style:normal;font-weight:700;text-align:right}
+  .tlist h5{font-size:9px;letter-spacing:.18em;color:var(--ink2);margin:8px 0 2px}
+  .tdisc{font-size:9.5px;color:var(--ink2);padding:8px 12px;border-top:1px solid var(--ink);letter-spacing:.03em}
+  .radar{padding:16px 20px 20px}
+  .radar .lead{font-size:11px;color:var(--ink2);margin:4px 0 14px}
+  .rrow{display:grid;grid-template-columns:110px 1fr 70px 110px;gap:12px;align-items:center;padding:8px 6px;border-bottom:1px solid rgba(0,0,0,.2);cursor:pointer;font-size:11.5px}
+  .rrow:hover{background:rgba(0,0,0,.06)}
+  .rrow .bar2{height:10px;border:1px solid var(--ink);position:relative}
+  .rrow .bar2 i{position:absolute;inset:0 auto 0 0;background:var(--ink)}
+  .rrow .lvl{font-size:9.5px;letter-spacing:.14em;text-align:center;border:1px solid var(--ink);padding:2px 0}
+  .rrow .lvl.hi{background:var(--ink);color:var(--paper2)}
+  .rrow small{color:var(--ink2);font-size:10px}
+  @media (max-width:760px){ .tscan .tb{grid-template-columns:1fr} .tgauge{border-right:0;border-bottom:1px solid var(--ink)} .rrow{grid-template-columns:90px 1fr 60px} .rrow small{display:none} }
+
+  /* token & dev */
+  .hc.ca{cursor:pointer;min-width:150px}
+  .hc.ca:hover{background:var(--ink);color:var(--paper2)} .hc.ca:hover label{color:#a9a7a0}
+  .hc.ca b{font-family:var(--mono)}
+  .hc.ca b.pre{letter-spacing:.12em;font-size:11px}
+  .tok{display:grid;grid-template-columns:1.15fr 1fr;gap:0}
+  .tok > div{padding:18px 20px}
+  .tok > div:first-child{border-right:1.5px solid var(--ink)}
+  .tok h6{font-size:9px;letter-spacing:.2em;color:var(--ink2);margin-bottom:8px}
+  .tick{font-family:var(--narrow);font-weight:700;font-size:56px;line-height:1}
+  .chainl{font-size:10px;letter-spacing:.16em;color:var(--ink2);margin-top:4px}
+  .stt{display:inline-block;margin-top:10px;font-size:9.5px;letter-spacing:.18em;padding:3px 8px;border:1.5px solid var(--ink)}
+  .stt.live{background:var(--ink);color:var(--paper2)}
+  .cabox{margin-top:16px;border:1.5px solid var(--ink)}
+  .cabox .l{background:var(--ink);color:var(--paper2);font-size:9px;letter-spacing:.2em;padding:4px 8px;display:flex;justify-content:space-between}
+  .cabox .v{display:flex;align-items:center;gap:10px;padding:10px}
+  .cabox code{flex:1;font-family:var(--mono);font-size:12.5px;word-break:break-all;line-height:1.5}
+  .cabox button,.lnk{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.14em;border:1.5px solid var(--ink);background:var(--paper2);color:var(--ink);padding:6px 10px;cursor:pointer;text-decoration:none;display:inline-block}
+  .cabox button:hover,.lnk:hover{background:var(--ink);color:var(--paper2)}
+  .cabox button:disabled{opacity:.35;cursor:not-allowed}
+  .lnks{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .tokfp{display:flex;gap:14px;align-items:center;margin-top:14px;font-size:10px;color:var(--ink2);line-height:1.5}
+  .tokfp canvas{width:84px;height:84px;border:1px solid var(--ink);flex:none}
+  .idc{border:1.5px solid var(--ink);background:repeating-linear-gradient(45deg,rgba(0,0,0,.03) 0 1px,transparent 1px 6px)}
+  .idc .top{display:flex;justify-content:space-between;background:var(--ink);color:var(--paper2);font-size:9px;letter-spacing:.2em;padding:5px 8px}
+  .idc .mid{display:grid;grid-template-columns:96px 1fr;gap:14px;padding:14px}
+  .idc .mid svg{width:96px;height:96px;display:block;border:1.5px solid var(--ink)}
+  .idc .nm2{font-family:var(--narrow);font-weight:700;font-size:26px;line-height:1.05}
+  .idc .rl{font-size:10px;letter-spacing:.14em;color:var(--ink2);margin-top:3px}
+  .idc .bio{font-size:11px;line-height:1.5;margin-top:8px}
+  .idc .xh{margin-top:8px;font-size:12px;font-weight:700}
+  .idc .xh a{color:var(--ink)}
+  .chan{margin-top:14px;display:grid;gap:6px}
+  .chan a,.chan span{display:flex;justify-content:space-between;font-size:11px;padding:6px 8px;border:1px solid var(--ink);color:var(--ink);text-decoration:none}
+  .chan a:hover{background:var(--ink);color:var(--paper2)}
+  .chan span{opacity:.45}
+  .phish{margin:0 20px 18px;border:1.5px solid var(--ink);padding:10px 12px;font-size:11px;line-height:1.55;background:repeating-linear-gradient(-45deg,rgba(0,0,0,.06) 0 6px,transparent 6px 12px)}
+  .phish b{letter-spacing:.1em}
+  .unset{color:var(--ink2);font-style:italic}
+  @media (max-width:760px){ .tok{grid-template-columns:1fr} .tok > div:first-child{border-right:0;border-bottom:1.5px solid var(--ink)} .hc.ca{min-width:0} }
+  @media (max-width:560px){ .hc.ca{display:none} }
+
+  /* coverage / launchpads */
+  .padchips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+  .padchips button{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;border:1px solid var(--ink);background:var(--paper2);color:var(--ink);padding:4px 8px;cursor:pointer}
+  .padchips button.on,.padchips button:hover{background:var(--ink);color:var(--paper2)}
+  .rrow .pd{font-size:9px;letter-spacing:.12em;border:1px solid var(--ink);padding:1px 5px;margin-right:6px}
+  .cov{padding:18px 20px 22px}
+  .cov h6{font-size:9px;letter-spacing:.2em;color:var(--ink2);margin:0 0 8px}
+  .chains{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:20px}
+  .chn{border:1.5px solid var(--ink);padding:10px;position:relative;min-height:84px}
+  .chn b{font-family:var(--narrow);font-size:19px;display:block}
+  .chn small{font-size:9.5px;color:var(--ink2);display:block;margin-top:2px;line-height:1.4}
+  .chn .st{position:absolute;top:8px;right:8px;font-size:8.5px;letter-spacing:.14em;border:1px solid var(--ink);padding:1px 5px}
+  .chn.live{background:var(--ink);color:var(--paper2)} .chn.live small{color:#b9b7b0} .chn.live .st{border-color:var(--paper2)}
+  .chn.research{border-style:dashed}
+  .padt{width:100%;border-collapse:collapse;font-size:11px}
+  .padt th{font-size:8.5px;letter-spacing:.16em;text-align:left;border-bottom:1.5px solid var(--ink);padding:5px 6px;color:var(--ink2);font-weight:500}
+  .padt td{padding:7px 6px;border-bottom:1px solid rgba(0,0,0,.18);vertical-align:middle}
+  .padt td b{font-size:12px}
+  .padt .sh{height:8px;border:1px solid var(--ink);position:relative;min-width:80px}
+  .padt .sh i{position:absolute;inset:0 auto 0 0;background:var(--ink)}
+  .padt .fl{font-weight:700}
+  @media (max-width:760px){ .padt .hm{display:none} }
+
+  /* official CA strip — always visible, full address */
+  .cabar{position:fixed;top:var(--head);left:0;right:0;height:var(--cabar);z-index:11;display:flex;align-items:stretch;background:var(--paper2);border-bottom:2px solid var(--ink)}
+  .cabar .cl{display:flex;flex-direction:column;justify-content:center;padding:0 14px;background:var(--ink);color:var(--paper2);white-space:nowrap}
+  .cabar .cl b{font-family:var(--narrow);font-size:15px;letter-spacing:.1em;line-height:1}
+  .cabar .cl small{font-size:8.5px;letter-spacing:.18em;color:#b9b7b0;margin-top:3px}
+  .cabar .ca-k{display:flex;align-items:center;padding:0 12px;font-size:11px;font-weight:700;letter-spacing:.2em;border-right:1px solid var(--ink)}
+  .cabar .addr{flex:1;min-width:0;display:flex;align-items:center;padding:0 14px;cursor:pointer;overflow:hidden}
+  .cabar .addr code{font-family:var(--mono);font-weight:700;font-size:17px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cabar .addr code .pfx{background:var(--ink);color:var(--paper2);padding:0 4px;margin-right:2px}
+  .cabar .addr:hover code{text-decoration:underline;text-underline-offset:4px}
+  .cabar .addr.pending code{color:var(--ink2)}
+  .cabar .stt2{display:flex;align-items:center;padding:0 12px;font-size:9.5px;letter-spacing:.16em;border-left:1px solid var(--ink);white-space:nowrap}
+  .cabar .stt2 i{width:8px;height:8px;background:var(--ink);margin-right:7px;animation:blink 1s steps(1) infinite}
+  .cabar button,.cabar a{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;border:0;border-left:2px solid var(--ink);background:var(--ink);color:var(--paper2);padding:0 18px;cursor:pointer;text-decoration:none;display:flex;align-items:center}
+  .cabar a{background:var(--paper2);color:var(--ink)}
+  .cabar button:hover{background:#000} .cabar a:hover{background:var(--ink);color:var(--paper2)}
+  .cabar button:disabled{opacity:.4;cursor:not-allowed}
+  @media (max-width:760px){ .cabar .ca-k,.cabar .stt2,.cabar a{display:none} .cabar .addr code{font-size:12px} .cabar .cl{padding:0 10px} .cabar button{padding:0 12px} }
+  @media (max-width:420px){ .cabar .cl small{display:none} .cabar .addr{padding:0 8px} .cabar .addr code{font-size:10.5px;letter-spacing:0} }
+
+  /* agent kit */
+  .kit{padding:18px 20px 22px}
+  .kit .intro{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;border-bottom:1.5px solid var(--ink);padding-bottom:14px}
+  .kit h2{font-family:var(--narrow);font-weight:700;font-size:40px;line-height:1}
+  .kit .intro p{font-size:11.5px;color:var(--ink2);margin-top:6px;line-height:1.55;max-width:560px}
+  .kit .steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1.5px solid var(--ink);margin:14px 0}
+  .kit .steps3 div{padding:9px 11px;font-size:10.5px;line-height:1.45;border-right:1px solid var(--ink)}
+  .kit .steps3 div:last-child{border-right:0}
+  .kit .steps3 b{display:block;font-family:var(--narrow);font-size:20px}
+  .ktabs{display:flex;flex-wrap:wrap;border:1.5px solid var(--ink);border-bottom:0}
+  .ktabs button{flex:1;min-width:110px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.12em;background:var(--paper2);color:var(--ink);border:0;border-right:1px solid var(--ink);padding:9px 8px;cursor:pointer;text-align:left}
+  .ktabs button:last-child{border-right:0}
+  .ktabs button small{display:block;font-weight:400;font-size:8.5px;color:var(--ink2);letter-spacing:.06em;margin-top:2px}
+  .ktabs button.on{background:var(--ink);color:var(--paper2)} .ktabs button.on small{color:#b9b7b0}
+  .kpane{border:1.5px solid var(--ink)}
+  .kpane .kh{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--ink);font-size:10.5px;color:var(--ink2);line-height:1.45}
+  .kpane .kh button{flex:none;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;background:var(--ink);color:var(--paper2);border:0;padding:8px 14px;cursor:pointer}
+  .kpane .kh button.done{background:var(--paper2);color:var(--ink);outline:1.5px solid var(--ink)}
+  .kpane pre{margin:0;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.55;white-space:pre-wrap;word-break:break-word;max-height:42vh;overflow:auto;background:repeating-linear-gradient(0deg,rgba(0,0,0,.025) 0 1px,transparent 1px 22px)}
+  .kpane .soon{padding:6px 10px;font-size:9.5px;letter-spacing:.12em;border-top:1px dashed var(--ink);background:repeating-linear-gradient(-45deg,rgba(0,0,0,.06) 0 6px,transparent 6px 12px)}
+  .kit .ask2{margin-top:14px}
+  .kit .ask2 h6{font-size:9px;letter-spacing:.2em;color:var(--ink2);margin-bottom:6px}
+  .kit .ask2 button{font-family:var(--mono);font-size:10.5px;text-align:left;background:var(--paper2);border:1px solid var(--ink);color:var(--ink);padding:6px 9px;cursor:pointer;margin:0 6px 6px 0}
+  .kit .ask2 button:hover{background:var(--ink);color:var(--paper2)}
+  @media (max-width:760px){ .kit .intro{grid-template-columns:1fr} .kit .steps3{grid-template-columns:1fr} .kit .steps3 div{border-right:0;border-bottom:1px solid var(--ink)} }
+
+  /* ===== AGENT KIT — main-stage uplink mode ===== */
+  #stage .tag,#links,.log,.agents,.ask{transition:opacity .45s}
+  .kitmode .tag,.kitmode #links,.kitmode .log,.kitmode .agents,.kitmode .ask{opacity:0 !important;pointer-events:none !important}
+  #uplink{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6;display:none}
+  .kitmode #uplink{display:block}
+  #uplink .nd rect.b{fill:#121212} #uplink .nd text{fill:#f3f2ee;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1.6px}
+  #uplink .nd text.s{font-size:8px;font-weight:400;fill:#b9b7b0;letter-spacing:1.2px}
+  #uplink .nd.off rect.b{fill:#f3f2ee;stroke:#121212;stroke-width:1.2} #uplink .nd.off text{fill:#121212} #uplink .nd.off text.s{fill:#77756f}
+  #uplink path{fill:none;stroke:#121212;stroke-width:1.4;stroke-dasharray:5 5}
+  #uplink path.off{stroke-opacity:.18}
+  .kitdock{position:fixed;z-index:15;left:14px;top:calc(var(--head) + var(--cabar) + 22px + 14px);bottom:14px;width:min(680px,calc(58% - 14px));display:none;flex-direction:column;
+    background:var(--paper2);border:2px solid var(--ink);box-shadow:10px 10px 0 var(--ink)}
+  .kitmode .kitdock{display:flex}
+  .kitdock::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.03) 0 1px,transparent 1px 3px)}
+  .kd-top{display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:var(--paper2);padding:7px 12px;font-size:10px;letter-spacing:.2em}
+  .kd-top button{font-family:var(--mono);font-size:10px;letter-spacing:.14em;background:var(--paper2);color:var(--ink);border:0;padding:5px 10px;cursor:pointer;font-weight:700}
+  .kd-top button:hover{background:#fff}
+  .kd-hero{padding:14px 16px 10px;border-bottom:1.5px solid var(--ink);display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
+  .kd-hero h2{font-family:var(--narrow);font-weight:700;font-size:clamp(24px,2.8vw,38px);line-height:.95;letter-spacing:.01em}
+  .kd-hero h2 span{background:var(--ink);color:var(--paper2);padding:0 6px}
+  .kd-hero p{font-size:11px;color:var(--ink2);margin-top:6px;line-height:1.5;max-width:440px}
+  .kd-hero .wk{font-size:9px;letter-spacing:.16em;text-align:right;color:var(--ink2);line-height:1.6}
+  .kd-hero .wk b{color:var(--ink);font-size:10.5px}
+  .kd-steps{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1.5px solid var(--ink)}
+  .kd-steps div{padding:7px 12px;font-size:10px;border-right:1px solid var(--ink);color:var(--ink2);letter-spacing:.04em}
+  .kd-steps div:last-child{border-right:0}
+  .kd-steps div b{color:var(--ink);letter-spacing:.14em;margin-right:6px}
+  .kd-steps div.on{background:var(--ink);color:var(--paper2)} .kd-steps div.on b{color:var(--paper2)}
+  .kd-main{flex:1;min-height:0;display:grid;grid-template-columns:200px 1fr;grid-template-rows:minmax(0,1fr);overflow:hidden}
+  .kd-carts{border-right:1.5px solid var(--ink);overflow:auto}
+  .cart{display:block;width:100%;text-align:left;font-family:var(--mono);background:none;border:0;border-bottom:1px solid var(--ink);padding:8px 12px;cursor:pointer;color:var(--ink);position:relative}
+  .cart i{font-style:normal;font-size:9px;letter-spacing:.16em;color:var(--ink2)}
+  .cart b{display:block;font-size:12px;letter-spacing:.1em;margin-top:2px}
+  .cart small{display:block;font-size:9px;color:var(--ink2);margin-top:3px;letter-spacing:.04em}
+  .cart .st{position:absolute;right:10px;top:10px;font-size:8px;letter-spacing:.14em;border:1px solid var(--ink);padding:1px 4px}
+  .cart .st.rd{background:var(--ink);color:var(--paper2)}
+  .cart:hover{background:rgba(0,0,0,.06)}
+  .cart.on{background:var(--ink);color:var(--paper2)} .cart.on i,.cart.on small{color:#b9b7b0} .cart.on .st{border-color:var(--paper2)} .cart.on .st.rd{background:var(--paper2);color:var(--ink)}
+  .cart.on::after{content:"";position:absolute;right:-9px;top:50%;margin-top:-8px;border:8px solid transparent;border-left-color:var(--ink);z-index:2}
+  .kd-term{display:flex;flex-direction:column;min-height:0;background:#121212;color:#e9e7e1}
+  .kd-term .th{display:flex;justify-content:space-between;gap:10px;padding:7px 12px;font-size:9.5px;letter-spacing:.14em;color:#9d9b94;border-bottom:1px solid #333}
+  .kd-term .th b{color:#f3f2ee}
+  .kd-term .note{padding:8px 12px;font-size:10.5px;line-height:1.5;color:#c9c7c0;border-bottom:1px dashed #3a3a3a}
+  .kd-term pre{flex:1;min-height:0;margin:0;padding:12px;overflow:auto;font-family:var(--mono);font-size:11px;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:#e9e7e1}
+  .kd-term pre .cur{display:inline-block;width:7px;height:13px;background:#f3f2ee;vertical-align:-2px;animation:blink .6s steps(1) infinite}
+  .kd-term .pend{padding:7px 12px;font-size:9.5px;letter-spacing:.1em;color:#121212;background:repeating-linear-gradient(-45deg,#f3f2ee 0 8px,#d9d7d0 8px 16px)}
+  .kd-bot{border-top:1.5px solid var(--ink);display:grid;grid-template-columns:auto 1fr;gap:0}
+  .tx{font-family:var(--narrow);font-weight:700;font-size:19px;letter-spacing:.12em;background:var(--ink);color:var(--paper2);border:0;padding:0 22px;cursor:pointer;position:relative;overflow:hidden;min-height:54px}
+  .tx::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 10px,rgba(255,255,255,.08) 10px 12px);animation:slide 1.2s linear infinite}
+  @keyframes slide{to{transform:translateX(12px)}}
+  .tx:hover{background:#000} .tx.done{background:var(--paper2);color:var(--ink);outline:2px solid var(--ink);outline-offset:-2px}
+  .kd-prompts{padding:8px 10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;overflow:hidden;max-height:62px}
+  .kd-prompts small{font-size:8.5px;letter-spacing:.18em;color:var(--ink2);width:100%}
+  .kd-prompts button{font-family:var(--mono);font-size:9.5px;background:var(--paper2);border:1px solid var(--ink);color:var(--ink);padding:4px 7px;cursor:pointer}
+  .kd-prompts button:hover{background:var(--ink);color:var(--paper2)}
+  @media (max-width:900px){ .kitdock{width:auto;right:14px} .kd-main{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)} .kd-carts{display:flex;overflow-x:auto;border-right:0;border-bottom:1.5px solid var(--ink)} .cart{min-width:150px;border-bottom:0;border-right:1px solid var(--ink)} .cart.on::after{display:none} .kd-hero .wk{display:none} }
+  @media (max-height:760px){ .kd-hero p,.kd-hero .wk,.kd-prompts{display:none} .kd-hero{padding:10px 14px} }
+  @media (max-width:560px){ .kd-steps{display:none} .kd-bot{grid-template-columns:1fr} .kd-prompts{display:none} .kd-hero p{display:none} }
+
+  .toast{position:fixed;z-index:30;left:50%;top:60px;transform:translateX(-50%);background:var(--ink);color:var(--paper2);font-size:11px;padding:8px 14px;opacity:0;pointer-events:none;letter-spacing:.04em}
+
+  @media (max-width:980px){
+    :root{--dash:330px}
+    .grid{grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr}
+    .card{border-bottom:1px solid rgba(0,0,0,.28)}
+    .card .n{font-size:26px;margin-top:6px}
+    .card canvas{margin-top:6px}
+    .hc.opt{display:none}
+    .chips{display:none}
+  }
+  @media (max-width:980px){ .log{width:170px} .agents{width:250px} .agents .row{grid-template-columns:30px 64px 1fr 34px} }
+  @media (max-width:560px){
+    .log,.agents{display:none}
+    .hc{min-width:0;padding:0 10px}
+    .hstat span{display:none}
+    header .logo span{display:none}
+    .cmd .note{display:none}
+    .card{padding:8px 10px}
+  }
+</style>
+</head>
+<body>
+<canvas id="grain"></canvas>
+
+<header id="head">
+  <div class="logo"><i></i><span id="brand">OBSERV AGENT</span></div>
+  <div class="hc"><label>SHIFT</label><b id="clock">00:00:00</b></div>
+  <div class="hc"><label>BLOCK</label><b id="blk">—</b></div>
+  <div class="hc opt"><label>BORN · 5M</label><b id="hBorn">0</b></div>
+  <div class="hc opt"><label>EQUITY FLOW · 5M</label><b id="hSwap">$0</b></div>
+  <div class="hc opt"><label>GAS</label><b id="gas">—</b></div>
+  <div class="hc warnc"><label>THREATS · 5M</label><b id="hThreat">0</b></div>
+  <div class="hsp"></div>
+  <button class="hbtn" id="bKit">AGENT KIT</button>
+  <button class="hbtn" id="bToken">TOKEN · DEV</button>
+  <button class="hbtn" id="bCert">GENESIS</button>
+  <button class="hbtn" id="bDaily">DISPATCH</button>
+  <button class="hbtn" id="bCov">COVERAGE</button>
+  <button class="hbtn" id="bThreat">THREAT RADAR</button>
+  <button class="hbtn" id="bRoad">ROADMAP</button>
+  <div class="hstat"><i></i><span id="linkTxt">ESTABLISHING UPLINK…</span></div>
+</header>
+
+<div class="cabar" id="cabar">
+  <div class="cl"><b id="caTick">$OBSERV</b><small id="caChain">ROBINHOOD CHAIN</small></div>
+  <div class="ca-k">CA</div>
+  <div class="addr pending" id="caAddr" title="Click to copy the official contract address"><code id="caCode">0x — awaiting genesis</code></div>
+  <div class="stt2" id="caStt"><i></i>PRE-LAUNCH</div>
+  <a id="caExp" href="#" target="_blank" rel="noopener noreferrer" style="display:none">VERIFY ↗</a>
+  <button id="caCopy" disabled>COPY CA</button>
+</div>
+<div class="ticker"><span class="lab">LIVE FEED</span><span class="run" id="run"></span></div>
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <svg id="links"></svg>
+  <div class="log" id="log"></div>
+  <svg id="uplink"></svg>
+  <section class="kitdock" id="kitDock">
+    <div class="kd-top"><span>AGENT KIT // UPLINK PROTOCOL v1</span><button id="kdBack">◂ RETURN TO OBSERVATORY</button></div>
+    <div class="kd-hero"><div><h2>TAKE <span id="kdName">OBSERV AGENT</span><br>INTO YOUR OWN AGENT</h2><p>Select a payload, transmit it to your clipboard, paste it into your personal AI. Same knowledge, same guardrails, same live data through the public read-only API.</p></div>
+      <div class="wk">COMPATIBLE WITH<br><b>CLAUDE · CHATGPT · GEMINI<br>CURSOR · ANY MCP CLIENT</b></div></div>
+    <div class="kd-steps"><div class="on" id="ks1"><b>01</b>SELECT PAYLOAD</div><div id="ks2"><b>02</b>TRANSMIT</div><div id="ks3"><b>03</b>PASTE INTO YOUR AGENT</div></div>
+    <div class="kd-main">
+      <div class="kd-carts" id="kdCarts"></div>
+      <div class="kd-term"><div class="th"><span id="kdPay">PAYLOAD</span><span id="kdSize"></span></div><div class="note" id="kdNote"></div><pre id="kdPre"></pre><div class="pend" id="kdPend" style="display:none"></div></div>
+    </div>
+    <div class="kd-bot"><button class="tx" id="kdTx">TRANSMIT ▸ CLIPBOARD</button>
+      <div class="kd-prompts" id="kdPrompts"><small>STARTER PROMPTS — CLICK TO COPY</small></div></div>
+  </section>
+  <div class="ask" id="ask">
+    <div class="ask-out" id="askOut" style="display:none">
+      <div class="ask-h"><span id="askHead">OBSERV AGENT · RESPONSE</span><span><button id="askSpeak" style="display:none">🔊 VOCALIZE</button><button id="askX">✕</button></span></div>
+      <div class="ask-body">
+        <div class="ask-q" id="askQ"></div>
+        <div class="ask-tools" id="askTools"></div>
+        <div class="ask-a" id="askA"></div>
+        <div class="ask-mode" id="askMode"></div>
+      </div>
+    </div>
+    <form class="ask-in" id="askForm">
+      <span class="spark">✦</span><b>QUERY AGENT</b>
+      <input id="askI" autocomplete="off" placeholder="Interrogate the chain — ask anything about live Robinhood Chain activity…">
+      <button type="submit">TRANSMIT ↵</button>
+    </form>
+    <div class="ask-sug" id="askSug">
+      <button>What is the hottest signal right now?</button>
+      <button>Decode the latest genesis</button>
+      <button>Any anomalies in the last 5 min?</button>
+      <button>Explain the bonding curve</button>
+      <button>Scan the latest genesis for threats</button>
+    </div>
+  </div>
+  <div class="agents" id="agents">
+    <div class="ah"><span>AGENT SHIFT · 5/5 ONLINE</span><span id="shift">00:00</span></div>
+  </div>
+</div>
+<div id="xhair"><span id="xh"></span></div>
+<div class="corner" id="cTL" style="left:14px;top:58px">FIG. 01 — ROBINHOOD CHAIN / LIVE TOPOLOGY</div>
+
+<section class="dash" id="dash">
+  <div class="cmd">
+    <span class="pr">observ-agent@4663:~/live$</span>
+    <span class="tx" id="narr"></span>
+    <span class="note">NEURAL NARRATOR · OBSERVATION ONLY · NOT ADVICE · DATA: <a href="https://dexpaprika.com" target="_blank" rel="noopener" style="color:inherit">DEXPAPRIKA</a> + ROBINHOOD CHAIN RPC</span>
+  </div>
+  <div class="inp">
+    <form id="form"><span>›</span><input id="q" autocomplete="off" spellcheck="false" placeholder="inject tx hash / contract address → ENTER — the agent will decode it"></form>
+    <div class="chips">
+      <button class="chip" data-ex="tx">LATEST LAUNCH TX</button>
+      <button class="chip" data-ex="ct">LATEST TOKEN X-RAY</button>
+      <button class="chip" data-ex="sum">SYNTHESIZE 5M</button>
+      <button class="chip" data-ex="cert">LATEST GENESIS</button>
+    </div>
+    <button class="go" form="form" type="submit">DECODE ↵</button>
+  </div>
+  <div class="grid">
+    <div class="card"><label><span>01 / TX PER SECOND</span><span>LIVE</span></label><div class="n" id="n1">0</div><div class="s">60s throughput</div><canvas id="v1"></canvas></div>
+    <div class="card"><label><span>02 / GENESIS EVENTS</span><span>ALL PADS</span></label><div class="n" id="n2">0</div><div class="s" id="s2">trailing 5 min</div><canvas id="v2"></canvas></div>
+    <div class="card"><label><span>03 / EQUITY FLOW</span><span>Δ24H</span></label><div class="n" id="n3">0</div><div class="s" id="s3">lead: —</div><canvas id="v3"></canvas></div>
+    <div class="card"><label><span>04 / GRADUATIONS</span><span>DEX</span></label><div class="n" id="n4">0</div><div class="s" id="s4">curve → DEX · 5m</div><canvas id="v4"></canvas></div>
+    <div class="card"><label><span>05 / NEW POOLS</span><span>DEX</span></label><div class="n" id="n5">0</div><div class="s">DexPaprika · 5m</div><canvas id="v5"></canvas></div>
+    <div class="card"><label><span>06 / AGENT CYCLES</span><span>AI</span></label><div class="n" id="n6">0 + 0</div><div class="s">narration + decode</div><canvas id="v6"></canvas></div>
+  </div>
+</section>
+
+<section class="result" id="result">
+  <div class="rh"><span id="rTitle">DECODER</span><button id="rClose">[ CLOSE ]</button></div>
+  <div class="steps" id="steps"></div>
+  <div class="rb" id="rb"></div>
+</section>
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal"><div class="sheet" id="sheet">
+  <div class="bar"><span id="mTitle"></span><span><button id="mCopy">COPY FOR X</button><button id="mClose">CLOSE ✕</button></span></div>
+  <div id="mBody"></div>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>/*OBSERV_BOOT*/</script>
+<script>
+(async () => {
+  const $ = s => document.querySelector(s);
+  const rnd = (a,b) => a + Math.random()*(b-a);
+  const pick = a => a[Math.floor(Math.random()*a.length)];
+  const hex = n => '0x' + Array.from({length:n},()=>'0123456789abcdef'[Math.floor(Math.random()*16)]).join('');
+  const short = h => h.slice(0,6)+'…'+h.slice(-4);
+  const fmt = n => Math.round(n).toLocaleString('en-US');
+  const DPR = Math.min(devicePixelRatio||1, 2);
+  try { await document.fonts.ready; } catch(e){}
+
+  /* ---------- grain ---------- */
+  (function grain(){
+    const c = $('#grain'), g = c.getContext('2d');
+    c.width = 256; c.height = 256; c.style.width = '100%'; c.style.height = '100%';
+    const img = g.createImageData(256,256);
+    for(let i=0;i<img.data.length;i+=4){ const v = 150 + Math.random()*105; img.data[i]=img.data[i+1]=img.data[i+2]=v; img.data[i+3]=255; }
+    g.putImageData(img,0,0);
+    c.style.imageRendering = 'pixelated';
+    // tile via CSS background
+    const url = c.toDataURL(); c.style.background = `url(${url})`; g.clearRect(0,0,256,256);
+    c.width = 1; c.height = 1;
+  })();
+
+  /* ---------- data vocab ---------- */
+  const PRE = ['NOVA','ORBIT','PULSE','HELIX','VOLT','ZEN','FLUX','ECHO','QUANT','NEON','LUMA','APEX'];
+  const SUF = ['CAT','AI','DOG','X','BOT','FI','404','MOON','FROG','GPT'];
+  const STOCKS = ['TSLA','NVDA','AAPL','AMZN','MSFT','META','PLTR','COIN','HOOD','GOOGL'];
+  const REG = window.OBSERV_REGISTRY || {chains:[{id:'robinhood', name:'Robinhood Chain', chainId:4663, status:'live', note:''}],
+    launchpads:[{id:'dex', name:'Direct DEX', code:'DEX', chain:'robinhood', model:''}]};
+  const LIVE_CHAINS = REG.chains.filter(c => c.status === 'live').map(c => c.id);
+  const PADS = REG.launchpads.filter(p => LIVE_CHAINS.includes(p.chain) && !p.standby && p.id !== 'dex');
+  const PAD_BY = Object.fromEntries(REG.launchpads.map(p => [p.id, p]));
+  function pickPad_unused(){ const tot = PADS.reduce((a,p) => a + (p.share||1), 0); let r = Math.random()*tot; for(const p of PADS){ r -= (p.share||1); if(r <= 0) return p; } return PADS[0]; }
+  const padOf = t => PAD_BY[t && t.pad] || PAD_BY.dex || PADS[0];
+  const CHAIN_BY = Object.fromEntries(REG.chains.map(c => [c.id, c]));
+  const chainOf = pad => CHAIN_BY[pad.chain] || REG.chains[0];
+  const chainTag = c => `${c.name.toUpperCase()} · ${c.chainId ? 'ID ' + c.chainId : 'ID TBD'}`;
+
+  /* ---------- three ---------- */
+  const stage = $('#stage');
+  const renderer = new THREE.WebGLRenderer({canvas:$('#gl'), antialias:true, alpha:true});
+  renderer.setPixelRatio(DPR);
+  renderer.setClearColor(0xe8e6e0, 1);
+
+  /* ================= SHADERS ================= */
+  const U = {uTime:{value:0}, uThink:{value:0}, uDot:{value:1.5}};
+  const GLSL_NOISE = `
+    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+    float n2(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+      return mix(mix(h(i), h(i+vec2(1.0,0.0)), f.x), mix(h(i+vec2(0.0,1.0)), h(i+vec2(1.0,1.0)), f.x), f.y); }
+    float fbm(vec2 p){ float v = 0.0, a = 0.5; for(int i=0;i<5;i++){ v += a*n2(p); p = p*2.03 + vec2(1.7,9.2); a *= 0.5; } return v; }
+    float b2(vec2 a){ a = floor(a); return fract(dot(a, vec2(0.5, a.y*0.75))); }
+    float b4(vec2 a){ return b2(0.5*a)*0.25 + b2(a); }
+    float b8(vec2 a){ return b4(0.5*a)*0.25 + b2(a); }`;
+  const VS_UV = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`;
+
+  // 1) EVENT HORIZON — domain-warped vortex, Bayer-dithered to ink
+  const horizonMat = new THREE.ShaderMaterial({
+    uniforms: U, vertexShader: VS_UV,
+    fragmentShader: `uniform float uTime; uniform float uThink; uniform float uDot; varying vec2 vUv; ${GLSL_NOISE}
+      void main(){
+        vec2 p = vUv*2.0 - 1.0; float r = length(p); if(r > 1.0) discard;
+        float a = atan(p.y, p.x);
+        float sp = uTime*(0.35 + uThink*1.8);
+        float tw = a + 0.77/(r + 0.18) + sp;
+        vec2 q = vec2(cos(tw), sin(tw)) * (r*2.4);
+        float n = fbm(q + vec2(sp*0.4, -sp*0.25));
+        float arms = 0.5 + 0.5*sin(tw*3.0 - r*10.0 + uTime*(1.0 + uThink*3.0));
+        float rings = 0.5 + 0.5*sin(r*46.0 - uTime*(3.0 + uThink*8.0));
+        float ink = n*0.85 + arms*0.25 + rings*0.08 - 0.35;
+        ink += (1.0 - smoothstep(0.0, 0.42, r))*1.2;
+        ink *= 1.0 - smoothstep(0.86, 1.0, r);
+        float v = step(b8(gl_FragCoord.xy/uDot), clamp(ink, 0.0, 1.0));
+        gl_FragColor = vec4(mix(vec3(0.953,0.949,0.933), vec3(0.07), v), 1.0);
+      }`
+  });
+
+  // 2) ENGRAVED PLANET — lit sphere shading rendered as cross-hatch line work
+  const planetMat = new THREE.ShaderMaterial({
+    uniforms: U, vertexShader: VS_UV,
+    fragmentShader: `uniform float uTime; uniform float uDot; varying vec2 vUv; ${GLSL_NOISE}
+      void main(){
+        vec2 p = vUv*2.0 - 1.0; float r = length(p); if(r > 1.0) discard;
+        vec3 nrm = vec3(p, sqrt(max(0.0, 1.0 - r*r)));
+        float lit = clamp(dot(nrm, normalize(vec3(-0.55, 0.35, 0.75))), 0.0, 1.0);
+        float cloud = fbm(p*5.0 + vec2(uTime*0.015, uTime*0.004));
+        float shade = clamp((1.0 - lit)*0.9 + (cloud - 0.5)*0.45, 0.0, 1.0);
+        vec2 fc = gl_FragCoord.xy/uDot;
+        float l1 = step(fract((fc.x + fc.y)/6.0), shade*0.55);
+        float l2 = step(fract((fc.x - fc.y)/6.0), (shade - 0.5)*0.9);
+        float l3 = step(fract(fc.y/4.0), (shade - 0.8)*1.4);
+        float ink = max(max(l1, l2), l3);
+        vec3 base = vec3(0.863, 0.855, 0.827);
+        gl_FragColor = vec4(mix(base, vec3(0.07), ink*0.82), 1.0);
+      }`
+  });
+
+  // 3) POST-PROCESS — lens bulge, RGB-split glitch slices, scan beam, scanlines, grain, vignette
+  const RT = renderer.capabilities.isWebGL2 && THREE.WebGLMultisampleRenderTarget ? THREE.WebGLMultisampleRenderTarget : THREE.WebGLRenderTarget;
+  const rt = new RT(2, 2, {minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter});
+  const postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const postMat = new THREE.ShaderMaterial({
+    uniforms: {tDiffuse:{value:rt.texture}, uTime:U.uTime, uThink:U.uThink, uGlitch:{value:0}, uRes:{value:new THREE.Vector2(1,1)}},
+    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+    fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; uniform float uThink; uniform float uGlitch; uniform vec2 uRes; varying vec2 vUv;
+      float hs(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }
+      void main(){
+        vec2 c = vUv - 0.5;
+        vec2 uv = 0.5 + c*(1.0 - 0.018*dot(c,c));
+        float g = uGlitch + uThink*0.12;
+        float row = floor(uv.y*48.0), tk = floor(uTime*24.0);
+        float on = step(1.0 - g*0.45, hs(vec2(row, tk)));
+        uv.x += on*(hs(vec2(row, tk + 7.0)) - 0.5)*0.08*g;
+        float ca = 0.0012 + g*0.006;
+        vec3 col;
+        col.r = texture2D(tDiffuse, clamp(uv + vec2(ca, 0.0), 0.0, 1.0)).r;
+        col.g = texture2D(tDiffuse, clamp(uv, 0.0, 1.0)).g;
+        col.b = texture2D(tDiffuse, clamp(uv - vec2(ca, 0.0), 0.0, 1.0)).b;
+        float beamY = 1.0 - fract(uTime*0.09);
+        float d = vUv.y - beamY;
+        col = mix(col, vec3(0.07), exp(-(d*90.0)*(d*90.0))*0.2);
+        col *= 1.0 - smoothstep(0.0, 0.06, d)*(1.0 - smoothstep(0.06, 0.18, d))*0.05;
+        col *= 0.975 + 0.025*sin(vUv.y*uRes.y*3.14159);
+        col += (hs(vUv*uRes + fract(uTime)*100.0) - 0.5)*0.045;
+        col *= 1.0 - dot(c,c)*0.35;
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+    depthTest:false, depthWrite:false
+  });
+  const postScene = new THREE.Scene();
+  postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat));
+  function glitch(amount){ gsap.fromTo(postMat.uniforms.uGlitch, {value:amount}, {value:0, duration:.7, ease:'power2.out', overwrite:true}); }
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, 1, .1, 1000);
+  camera.position.set(0,0,100);
+  const INK = 0x121212, PAPER = 0xf3f2ee;
+  let W = 100, H = 72;
+
+  function dotTex(){
+    const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d');
+    g.fillStyle = '#000'; g.beginPath(); g.arc(16,16,13,0,Math.PI*2); g.fill();
+    return new THREE.CanvasTexture(c);
+  }
+  const DOT = dotTex();
+  const lineMat = (op=1) => new THREE.LineBasicMaterial({color:INK, transparent:true, opacity:op});
+
+  // --- band textures (micro data printed along the arc)
+  function bandTexture(kind){
+    const w = 4096, h = kind==='blocks' ? 96 : 224;
+    const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+    g.fillStyle = '#f1f0eb'; g.fillRect(0,0,w,h);
+    g.fillStyle = '#121212';
+    if(kind === 'blocks'){
+      let x = 0;
+      while(x < w){
+        const t = Math.random();
+        if(t < .45){ // barcode
+          const bw = rnd(60,180); for(let i=0;i<bw;i+=rnd(2,6)){ g.fillRect(x+i, 14, rnd(1,3), h-28); } x += bw + 20;
+        } else if(t < .75){ // qr patch
+          const s = 7, n = Math.floor((h-24)/s);
+          for(let i=0;i<n;i++) for(let j=0;j<n;j++) if(Math.random()<.5) g.fillRect(x+i*s, 12+j*s, s, s);
+          x += n*s + 24;
+        } else { // solid block w/ label
+          const bw = rnd(80,160); g.fillRect(x, 16, bw, h-32);
+          g.fillStyle = '#f1f0eb'; g.font = '600 22px "IBM Plex Mono"'; g.fillText(pick(['4663','L2','ETH','RWA','POOL','UNI']), x+10, h/2+8);
+          g.fillStyle = '#121212'; x += bw + 22;
+        }
+      }
+      g.fillRect(0,0,w,5); g.fillRect(0,h-5,w,5);
+    } else {
+      const fs = kind==='text' ? 14 : 12;
+      g.font = `500 ${fs}px "IBM Plex Mono"`;
+      let x = 8;
+      while(x < w){
+        const colW = rnd(150, 260);
+        let y = 22;
+        g.globalAlpha = kind==='text' ? 1 : .75;
+        while(y < h-10){
+          const line = pick([
+            () => `${(pick(PADS) || {code:'DEX'}).code} · FACTORY WATCH`,
+            () => `CHAIN 4663 · BLOCK CADENCE ~100MS`,
+            () => `A05 · HOLDER MAP · CREATOR TRACE`,
+            () => `SWAP TEST · UNISWAP V2/V3/V4 QUOTERS`,
+            () => `DEXPAPRIKA · POOLS · VOLUME · LIQUIDITY`,
+            () => `RPC · eth_getLogs · Transfer(address,address,uint256)`,
+            () => `THREAT SIGNALS · EVIDENCE ATTACHED`,
+            () => `GENESIS CERTIFICATE · ON-CHAIN RECORD`,
+          ])();
+          g.fillText(line, x, y); y += fs + 5;
+        }
+        g.globalAlpha = 1;
+        x += colW;
+        g.fillRect(x-14, 10, 1.5, h-20);
+        if(Math.random()<.3){ g.fillRect(x-8, 14, 26, 26); x += 30; }
+      }
+      g.fillRect(0,0,w,6); g.fillRect(0,h-6,w,6);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = THREE.RepeatWrapping; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  function arcStrip(r0, r1, a0, a1, seg=180){
+    const pos = [], uv = [], idx = [];
+    for(let i=0;i<=seg;i++){
+      const u = i/seg, a = a0 + (a1-a0)*u, c = Math.cos(a), s = Math.sin(a);
+      pos.push(c*r0, s*r0, 0, c*r1, s*r1, 0); uv.push(u,0, u,1);
+      if(i<seg){ const k = i*2; idx.push(k,k+1,k+2, k+1,k+3,k+2); }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv,2));
+    g.setIndex(idx); return g;
+  }
+  function circle(r, seg=128){
+    const p = []; for(let i=0;i<=seg;i++){ const a = i/seg*Math.PI*2; p.push(new THREE.Vector3(Math.cos(a)*r, Math.sin(a)*r, 0)); }
+    return new THREE.BufferGeometry().setFromPoints(p);
+  }
+
+  // --- planet (engraved globe) + bands
+  const R = 78;
+  const planet = new THREE.Group(); scene.add(planet);
+  const globe = new THREE.Group(); planet.add(globe);
+  // occluding disc so the back stays clean
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(R, 128), planetMat);
+  disc.position.z = -1; planet.add(disc);
+  for(let lat=-80; lat<=80; lat+=6){
+    const rr = R*Math.cos(lat*Math.PI/180), y = R*Math.sin(lat*Math.PI/180);
+    const l = new THREE.LineLoop(circle(rr,160), lineMat(.16)); l.rotation.x = Math.PI/2; l.position.y = y; globe.add(l);
+  }
+  for(let lon=0; lon<180; lon+=9){
+    const l = new THREE.LineLoop(circle(R,160), lineMat(.12)); l.rotation.y = lon*Math.PI/180; globe.add(l);
+  }
+  { // stipple shading — denser toward the limb on the right
+    const n = 14000, pos = new Float32Array(n*3); let k = 0;
+    while(k < n){
+      const u = rnd(-1,1), t = Math.random()*Math.PI*2, s = Math.sqrt(1-u*u);
+      const x = s*Math.cos(t), y = u, z = s*Math.sin(t);
+      if(z < 0) continue;
+      const limb = 1 - z;                     // 0 center, 1 edge
+      if(Math.random() > .15 + limb*.85) continue;
+      pos[k*3]=x*R; pos[k*3+1]=y*R; pos[k*3+2]=z*R; k++;
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    globe.add(new THREE.Points(g, new THREE.PointsMaterial({map:DOT, color:INK, size:.32, transparent:true, opacity:.3, depthWrite:false})));
+  }
+  const outline = new THREE.LineLoop(circle(R,256), lineMat(.9)); planet.add(outline);
+
+  const A0 = -1.25, A1 = 1.25;
+  const bands = [
+    {r0:R+2,  r1:R+11, tex:bandTexture('text'),   speed:.026},
+    {r0:R+12, r1:R+15, tex:bandTexture('blocks'), speed:-.04},
+    {r0:R+16.5, r1:R+24, tex:bandTexture('dim'),  speed:.017},
+  ];
+  const bandGroup = new THREE.Group(); planet.add(bandGroup);
+  bands.forEach(b => {
+    b.mesh = new THREE.Mesh(arcStrip(b.r0,b.r1,A0,A1), new THREE.MeshBasicMaterial({map:b.tex, transparent:true}));
+    b.mesh.position.z = 1; bandGroup.add(b.mesh);
+    [b.r0,b.r1].forEach(r => { const pts=[]; for(let i=0;i<=200;i++){const a=A0+(A1-A0)*i/200; pts.push(new THREE.Vector3(Math.cos(a)*r,Math.sin(a)*r,1.1));}
+      bandGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat(1))); });
+  });
+  // radial hatch ticks outside the bands
+  {
+    const p = [];
+    for(let i=0;i<520;i++){ const a = A0+(A1-A0)*i/520, r0 = R+25, r1 = r0 + (i%10===0 ? 4 : rnd(.6,2));
+      p.push(Math.cos(a)*r0, Math.sin(a)*r0, 1, Math.cos(a)*r1, Math.sin(a)*r1, 1); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p,3));
+    bandGroup.add(new THREE.LineSegments(g, lineMat(.55)));
+  }
+
+  // --- porthole core
+  const core = new THREE.Group(); scene.add(core);
+  const CR = 13;
+  const coreFace = new THREE.Mesh(new THREE.CircleGeometry(CR, 96), new THREE.MeshBasicMaterial({color:PAPER}));
+  core.add(coreFace);
+  const horizon = new THREE.Mesh(new THREE.CircleGeometry(CR-.6, 128), horizonMat);
+  horizon.position.z = .05; core.add(horizon);
+  const frame = new THREE.Group(); core.add(frame);
+  [[CR, CR+1.6], [CR+2.4, CR+2.7], [CR-.9, CR-.6]].forEach(([a,b]) => {
+    const m = new THREE.Mesh(new THREE.RingGeometry(a,b,128), new THREE.MeshBasicMaterial({color:INK})); m.position.z = .2; frame.add(m);
+  });
+  { // tick ring
+    const p = []; for(let i=0;i<180;i++){ const a = i/180*Math.PI*2, r0 = CR+3.1, r1 = r0 + (i%15===0?2:.9);
+      p.push(Math.cos(a)*r0, Math.sin(a)*r0, .2, Math.cos(a)*r1, Math.sin(a)*r1, .2); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p,3));
+    frame.add(new THREE.LineSegments(g, lineMat(.9)));
+  }
+  const burst = (() => { // sunburst spray
+    const p = []; for(let i=0;i<1400;i++){ const a = Math.random()*Math.PI*2, r0 = CR+5 + Math.random()*2, len = Math.pow(Math.random(),2.2)*48 + 1;
+      p.push(Math.cos(a)*r0, Math.sin(a)*r0, -.5, Math.cos(a)*(r0+len), Math.sin(a)*(r0+len), -.5); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p,3));
+    const ls = new THREE.LineSegments(g, lineMat(.22)); core.add(ls); return ls;
+  })();
+  const swirl = (() => { // particle vortex inside porthole
+    const n = 7000, pos = new Float32Array(n*3), meta = new Float32Array(n*2);
+    for(let i=0;i<n;i++){ const r = (CR-1.2)*Math.pow(Math.random(), .55), a = Math.random()*Math.PI*2;
+      meta[i*2] = r; meta[i*2+1] = a; pos[i*3+2] = .1; }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    const pts = new THREE.Points(g, new THREE.PointsMaterial({map:DOT, color:INK, size:.22, transparent:true, opacity:.4, depthWrite:false}));
+    core.add(pts); return {pts, meta, n, pos};
+  })();
+  const hole = (() => { // dark center
+    const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+    const gr = g.createRadialGradient(64,64,0,64,64,64); gr.addColorStop(0,'rgba(0,0,0,1)'); gr.addColorStop(.35,'rgba(0,0,0,.85)'); gr.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.fillRect(0,0,128,128);
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), transparent:true, depthWrite:false}));
+    s.scale.setScalar(9); s.position.z = .15; core.add(s); return s;
+  })();
+
+  // --- rotating data rings around the porthole
+  const coreRings = [
+    {r0:CR+6.2, r1:CR+8.6, tex:bandTexture('text'), speed:.05},
+    {r0:CR+9.2, r1:CR+10.4, tex:bandTexture('blocks'), speed:-.08},
+  ];
+  coreRings.forEach(b => {
+    b.tex.repeat.x = 3;
+    const m = new THREE.Mesh(arcStrip(b.r0, b.r1, 0, Math.PI*2, 240), new THREE.MeshBasicMaterial({map:b.tex, transparent:true, opacity:.92}));
+    m.position.z = -.2; core.add(m);
+  });
+  // --- radar sweep across the planet bands
+  const sweep = (() => {
+    const g = new THREE.Group(); planet.add(g);
+    const pts = [new THREE.Vector3(R-6,0,1.5), new THREE.Vector3(R+30,0,1.5)];
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat(1)));
+    const fan = new THREE.Mesh(arcStrip(R-6, R+30, -.05, 0, 8), new THREE.MeshBasicMaterial({color:INK, transparent:true, opacity:.12, side:THREE.DoubleSide}));
+    fan.position.z = 1.4; g.add(fan);
+    const head = new THREE.Mesh(new THREE.PlaneGeometry(1.6,1.6), new THREE.MeshBasicMaterial({color:INK})); head.position.set(R+30.8,0,1.5); g.add(head);
+    return g;
+  })();
+
+  // --- chain of links (the blockchain, literally)
+  const chain = new THREE.Group(); scene.add(chain);
+  const linkGeo = new THREE.TorusGeometry(1.05, .26, 8, 22);
+  const linkMat = new THREE.MeshBasicMaterial({color:INK});
+  let links = [], chainStart = -60, chainEnd = 0;
+  const SP = 1.62;
+  function buildChain(){
+    links.forEach(l => chain.remove(l)); links = [];
+    const n = Math.ceil((chainEnd - chainStart)/SP) + 2;
+    for(let i=0;i<n;i++){ const m = new THREE.Mesh(linkGeo, linkMat); m.scale.set(1.25,.78,1); if(i%2) m.rotation.x = Math.PI/2; chain.add(m); links.push(m); }
+  }
+
+  // --- pulses
+  function pulse(r0=CR+3, r1=CR+30, op=.6){
+    const l = new THREE.LineLoop(circle(1,128), lineMat(op)); l.scale.setScalar(r0); l.position.z = -.3; core.add(l);
+    gsap.to(l.scale, {x:r1, y:r1, duration:2.4, ease:'power1.out'});
+    gsap.to(l.material, {opacity:0, duration:2.4, ease:'power1.out', onComplete(){ core.remove(l); l.geometry.dispose(); l.material.dispose(); }});
+  }
+  // block carried along the chain into the core
+  function carrier(){
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(2.2,2.2), new THREE.MeshBasicMaterial({color:INK}));
+    const edge = new THREE.LineLoop(circle(2,4), lineMat(1)); edge.rotation.z = Math.PI/4; m.add(edge);
+    m.position.set(chainStart, chain.position.y, 2); scene.add(m);
+    gsap.to(m.position, {x:core.position.x - CR - 3, duration:rnd(2.2,3.2), ease:'none', onComplete(){
+      scene.remove(m); m.geometry.dispose(); m.material.dispose();
+      gsap.fromTo(frame.scale, {x:1.06,y:1.06}, {x:1,y:1,duration:.6,ease:'elastic.out(1,.4)'});
+      pulse();
+    }});
+    gsap.to(m.rotation, {z:Math.PI*2, duration:3, ease:'none'});
+  }
+
+  // --- layout
+  function layout(){
+    const r = stage.getBoundingClientRect();
+    renderer.setSize(r.width, r.height, false);
+    const sz = renderer.getDrawingBufferSize(new THREE.Vector2());
+    rt.setSize(sz.x, sz.y); postMat.uniforms.uRes.value.copy(sz);
+    U.uDot.value = DPR*1.25;
+    camera.aspect = r.width/r.height; camera.updateProjectionMatrix();
+    H = 2*camera.position.z*Math.tan(camera.fov*Math.PI/360); W = H*camera.aspect;
+    const narrow = camera.aspect < 1.1;
+    const edgeX = -W/2 + W*(narrow ? .26 : .43);
+    planet.position.set(edgeX - (R+24), 0, -8);
+    const s = Math.min(1, (W*(narrow ? .42 : .3))/(CR+8));
+    core.scale.setScalar(s);
+    core.position.set(W/2 - W*(narrow ? .26 : .25), H*.04, 0);
+    chain.position.y = core.position.y - (narrow ? 0 : 1.5);
+    chainStart = -W/2 - 4; chainEnd = core.position.x - (CR+3)*s;
+    buildChain();
+    sizeViz();
+    $('#cTL').style.top = (stage.offsetTop + 12) + 'px';
+  }
+  addEventListener('resize', layout);
+
+  /* ---------- tags anchored to the band ---------- */
+  const tags = [];
+  const tmp = new THREE.Vector3();
+  function addTag(title, sub, onClick, extra){
+    const el = document.createElement('div'); el.className = 'tag' + (extra ? ' ' + extra : '');
+    if(onClick){ el.classList.add('click'); el.addEventListener('click', onClick); }
+    el.innerHTML = `${title}<small>${sub}</small>`; stage.appendChild(el);
+    // try anchor angles until one lands inside the stage
+    let a, tries = 0, rb;
+    do { a = rnd(-.38,.38); rb = pick([R+6.5, R+13.5, R+20]); tries++;
+      tmp.set(Math.cos(a)*rb, Math.sin(a)*rb, 1); bandGroup.localToWorld(tmp); tmp.project(camera);
+    } while((Math.abs(tmp.y) > .82 || tmp.x < -.98 || tmp.x > .5) && tries < 20);
+    const T = {el, a, rb}; tags.push(T);
+    if(Math.random() < .55){
+      T.line = document.createElementNS('http://www.w3.org/2000/svg','path');
+      T.line.setAttribute('fill','none'); T.line.setAttribute('stroke','#121212'); T.line.setAttribute('stroke-width','1');
+      T.line.setAttribute('stroke-dasharray','3 3'); $('#links').appendChild(T.line);
+      gsap.fromTo(T.line, {opacity:0}, {opacity:.7, duration:.4});
+    }
+    gsap.fromTo(el, {opacity:0, x:-6}, {opacity:1, x:0, duration:.35, ease:'power2.out'});
+    while(tags.length > 11){ const old = tags.shift(); gsap.to([old.el, old.line].filter(Boolean), {opacity:0, duration:.3, onComplete(){ old.el.remove(); old.line && old.line.remove(); }}); }
+  }
+  let dashOff = 0;
+  function placeTags(){
+    const r = stage.getBoundingClientRect();
+    tmp.copy(core.position); tmp.project(camera);
+    const cx = (tmp.x*.5+.5)*r.width, cy = (-tmp.y*.5+.5)*r.height;
+    dashOff -= .6;
+    tags.forEach(T => {
+      tmp.set(Math.cos(T.a)*T.rb, Math.sin(T.a)*T.rb, 1); bandGroup.localToWorld(tmp); tmp.project(camera);
+      const x = (tmp.x*.5+.5)*r.width, y = (-tmp.y*.5+.5)*r.height;
+      T.el.style.left = x + 'px'; T.el.style.top = y + 'px';
+      if(T.line){
+        const mx = (x+cx)/2, my = Math.min(y,cy) - 40;
+        T.line.setAttribute('d', `M${x},${y} Q${mx},${my} ${cx},${cy}`);
+        T.line.setAttribute('stroke-dashoffset', dashOff);
+      }
+    });
+  }
+
+  /* ---------- loop ---------- */
+  const clock = new THREE.Clock();
+  let chainShift = 0;
+  function loop(){
+    const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
+    globe.rotation.y = t*.03; globe.rotation.x = .25;
+    bandGroup.rotation.z = Math.sin(t*.12)*.05;
+    bands.forEach(b => b.tex.offset.x += b.speed*dt);
+    burst.rotation.z = t*.02;
+    coreRings.forEach(b => b.tex.offset.x += b.speed*dt);
+    sweep.rotation.z = Math.sin(t*.55)*.42;
+    frame.rotation.z -= dt*(S.thinking ? 1.6 : .05);
+    burst.material.opacity += ((S.thinking ? .5 : .22) - burst.material.opacity)*.05;
+    hole.scale.setScalar(9 + Math.sin(t*2)*.5);
+    // swirl
+    const {meta, pos, n} = swirl;
+    for(let i=0;i<n;i++){
+      const r = meta[i*2]; meta[i*2+1] += dt*(.15 + 2.2/(r+.8));
+      const a = meta[i*2+1]; pos[i*3] = Math.cos(a)*r; pos[i*3+1] = Math.sin(a)*r*.98;
+    }
+    swirl.pts.geometry.attributes.position.needsUpdate = true;
+    // chain flow
+    chainShift = (chainShift + dt*2.2) % (SP*2);
+    links.forEach((m,i) => { m.position.x = chainStart + i*SP + chainShift; m.visible = m.position.x < chainEnd; });
+    placeTags();
+    if(S.kit) placeUplink();
+    U.uTime.value = t;
+    U.uThink.value += ((S.thinking ? 1 : 0) - U.uThink.value)*.05;
+    renderer.setRenderTarget(rt); renderer.render(scene, camera);
+    renderer.setRenderTarget(null); renderer.render(postScene, postCam);
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------- dashboard viz ---------- */
+  const V = ['#v1','#v2','#v3','#v4','#v5','#v6'].map(s => $(s));
+  function sizeViz(){ V.forEach(c => { const r = c.getBoundingClientRect(); c.width = Math.max(1,r.width*DPR); c.height = Math.max(1,r.height*DPR); }); }
+  // live state (filled from the server: /api/state at boot, then /api/stream)
+  const S = {block:null, bps:null, tps:null, gas:null, hist:[], ev:[], narr:0, dec:0, tokens:[], market:null, scanBlock:null, scanTracked:0, link:'connecting'};
+  const within = ms => S.ev.filter(e => Date.now()-e.at < ms);
+  function ctx(c){ const g = c.getContext('2d'); g.clearRect(0,0,c.width,c.height); g.fillStyle = g.strokeStyle = '#121212'; return g; }
+  function drawSpark(){
+    const c = V[0], g = ctx(c), w = c.width, h = c.height, d = S.hist.length ? S.hist : [0];
+    const max = Math.max(1, ...d) * 1.15;
+    g.lineWidth = 1.5*DPR; g.beginPath();
+    d.forEach((v,i) => { const x = i/Math.max(1,d.length-1)*w, y = h - v/max*h; i ? g.lineTo(x,y) : g.moveTo(x,y); }); g.stroke();
+    for(let i=0;i<d.length;i+=2){ const x = i/Math.max(1,d.length-1)*w, y = h - d[i]/max*h; g.fillRect(x, y, 1*DPR, h-y); }
+  }
+  function drawBars(c, vals){
+    const g = ctx(c), w = c.width, h = c.height, n = Math.max(1, vals.length), bh = h/n*.62, max = Math.max(1,...vals);
+    vals.forEach((v,i) => { const y = i*h/n; g.globalAlpha = .12; g.fillRect(0,y,w,bh); g.globalAlpha = 1; g.fillRect(0,y,w*v/max,bh); });
+  }
+  function drawPix(c, seed){
+    // a pixel grid derived from the latest equity flow amounts (deterministic, not random noise)
+    const g = ctx(c), w = c.width, h = c.height, s = 6*DPR, cols = Math.floor(w/s), rows = Math.floor(h/s);
+    let x = (seed|0) || 7; const nx = () => (x = (x * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+    for(let i=0;i<cols;i++) for(let j=0;j<rows;j++){ if(nx() < .42) g.fillRect(i*s, j*s, s-1, s-1); }
+  }
+  function drawDots(c, k){
+    const g = ctx(c), w = c.width, h = c.height, cx = w/2, cy = h/2, r = Math.min(w,h)*.38, n = 24;
+    for(let i=0;i<n;i++){ const a = i/n*Math.PI*2 - Math.PI/2; g.beginPath(); g.arc(cx+Math.cos(a)*r, cy+Math.sin(a)*r, (i < k%n ? 3.2 : 1.6)*DPR, 0, Math.PI*2); i < k%n ? g.fill() : g.stroke(); }
+    g.beginPath(); g.arc(cx,cy,4*DPR,0,Math.PI*2); g.fill();
+  }
+  function drawTicks(c, n){
+    const g = ctx(c), w = c.width, h = c.height, m = 40;
+    for(let i=0;i<m;i++){ const x = i/m*w; const on = i < n; g.globalAlpha = on ? 1 : .18; g.fillRect(x, on ? h*.15 : h*.55, w/m*.6, on ? h*.85 : h*.45); }
+    g.globalAlpha = 1;
+  }
+  function tweenNum(el, to, fmtFn = v => fmt(v)){
+    const o = {v: parseFloat(el.dataset.v || 0)};
+    gsap.to(o, {v:to, duration:.6, ease:'power2.out', onUpdate(){ el.textContent = fmtFn(o.v); }});
+    el.dataset.v = to;
+  }
+  const usd = v => v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : v >= 1e3 ? '$' + (v/1e3).toFixed(1) + 'K' : '$' + Math.round(v);
+
+  function refresh(){
+    const f = within(5*60*1000), c = t => f.filter(e=>e.type===t);
+    tweenNum($('#n2'), c('launch').length);
+    { const lp = Object.entries(c('launch').reduce((a,e)=>(a[e.pad]=(a[e.pad]||0)+1,a),{})).sort((a,b)=>b[1]-a[1])[0]; $('#s2').textContent = `${PADS.length} pads · lead: ${lp ? (PAD_BY[lp[0]] || {code:lp[0]}).code : '—'}`; }
+    const sw = c('swap'), flowUsd = sw.reduce((a,e)=>a+e.usd,0);
+    tweenNum($('#n3'), flowUsd, usd);
+    const top = Object.entries(sw.reduce((a,e)=>(a[e.stock]=(a[e.stock]||0)+e.usd,a),{})).sort((a,b)=>b[1]-a[1]);
+    $('#s3').textContent = 'lead: ' + (top[0] ? top[0][0] : (S.market && S.market.equities[0] ? S.market.equities[0].sym + ' (24h)' : '—'));
+    tweenNum($('#n4'), c('graduate').length);
+    $('#s4').textContent = `${c('threat').length} threat flags · 5m`;
+    tweenNum($('#n5'), c('pool').length);
+    $('#n6').textContent = `${S.narr} + ${S.dec}`;
+    $('#hBorn').textContent = c('launch').length; $('#hSwap').textContent = usd(flowUsd);
+    const pads = Object.entries(c('launch').reduce((a,e)=>(a[e.pad]=(a[e.pad]||0)+1,a),{})).sort((a,b)=>b[1]-a[1]).slice(0,6).map(x => x[1]);
+    drawBars(V[1], pads.length ? pads : [0]);
+    drawPix(V[2], Math.round(flowUsd) + sw.length); drawDots(V[3], c('graduate').length); drawTicks(V[4], c('pool').length);
+    drawDots(V[5], S.narr + S.dec);
+  }
+
+  /* ---------- clock + block counter (interpolated between server updates) ---------- */
+  setInterval(() => {
+    if(S.block != null && S.bps){ S.block += S.bps * .1; $('#blk').textContent = fmt(Math.floor(S.block)); }
+  }, 100);
+  setInterval(() => { $('#clock').textContent = new Date().toLocaleTimeString('en-GB'); }, 1000);
+
+  /* ---------- log column + ticker (real events only) ---------- */
+  const logEl = $('#log');
+  function log(txt, hi=false){
+    const d = document.createElement('div'); d.textContent = `${new Date().toLocaleTimeString('en-GB')}  ${txt}`; if(hi) d.className = 'hi';
+    logEl.prepend(d); while(logEl.children.length > 26) logEl.lastChild.remove();
+  }
+  const run = $('#run');
+  let tickerX = 0, tickRot = 0;
+  function tick(html){
+    const s = document.createElement('span'); s.innerHTML = html; run.appendChild(s);
+    while(run.children.length > 40) { tickerX += run.firstChild.offsetWidth + 26; run.firstChild.remove(); }
+  }
+  (function tickLoop(){
+    tickerX -= .7; run.style.transform = `translateX(${tickerX}px)`;
+    if(run.scrollWidth + tickerX < innerWidth + 200) tickerFill();
+    requestAnimationFrame(tickLoop);
+  })();
+  function tickerFill(){
+    // when no fresh events arrive, cycle real figures: network stats + DexPaprika 24h equities + recent geneses
+    const items = [];
+    if(S.block != null) items.push(`BLK <b>${fmt(Math.floor(S.block))}</b>${S.tps != null ? ' · ~' + fmt(S.tps) + ' TX/S' : ''}`);
+    if(S.gas != null) items.push(`GAS <b>${S.gas.toFixed(3)}</b> GWEI`);
+    if(S.market){ items.push(`DEX VOL 24H <b>${usd(S.market.volume24hUsd)}</b>`); for(const e of S.market.equities.slice(0,5)) items.push(`${esc(e.sym)} <b>${usd(e.volume24hUsd)}</b> 24H`); }
+    for(const t of S.tokens.slice(-4)) items.push(`${padOf(t).code} <b>${esc(t.name)}</b>${t.threat ? ' · THREAT ' + t.threat.score : ''}`);
+    if(S.scanTracked) items.push(`SCANNER <b>${fmt(S.scanTracked)}</b> TOKENS TRACKED`);
+    if(!items.length) items.push('ESTABLISHING UPLINK…');
+    for(let i=0;i<4;i++) tick(items[(tickRot++) % items.length]);
+  }
+
+  /* ---------- agent shift roster (statuses reflect real work) ---------- */
+  const AG = [
+    {id:'A01', name:'SCANNER',   job:() => S.scanBlock ? `scanned to block #${fmt(S.scanBlock)}` : 'syncing launchpad factories'},
+    {id:'A02', name:'DECODER',   job:() => S.decoding ? 'decoding ' + S.decoding : 'standby · awaiting input'},
+    {id:'A03', name:'ARCHIVIST', job:() => `${S.ev.length} events in window`},
+    {id:'A04', name:'NARRATOR',  job:() => typing ? 'composing observation' : 'monitoring feed'},
+    {id:'A05', name:'VERIFIER',  job:() => `${S.tokens.filter(t => t.threat).length}/${S.tokens.length} geneses scanned`},
+  ];
+  const agBox = $('#agents');
+  AG.forEach(a => {
+    a.el = document.createElement('div'); a.el.className = 'row';
+    a.el.innerHTML = `<b>${a.id}</b><span>${a.name}</span><span class="st"></span><span class="bar"><i></i></span>`;
+    agBox.appendChild(a.el); a.p = Math.random();
+  });
+  function agentsTick(){
+    AG.forEach(a => {
+      const busy = (a.id==='A04' || a.id==='A05') && S.aiBusy;
+      a.el.querySelector('.st').textContent = busy ? (a.id==='A04' ? 'responding: ' + S.aiBusy : 'validating response') : a.job();
+      a.p = (a.p + (busy ? .35 : .06)) % 1;
+      a.el.querySelector('.bar i').style.width = (a.p*100).toFixed(0)+'%';
+      a.el.classList.toggle('busy', busy || a.p < .5);
+    });
+  }
+  const shiftStart = Date.now();
+  setInterval(() => { const s = Math.floor((Date.now()-shiftStart)/1000); $('#shift').textContent = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }, 1000);
+
+  /* ---------- crosshair ---------- */
+  const xh = $('#xhair');
+  stage.addEventListener('pointermove', e => {
+    const r = stage.getBoundingClientRect(), nx = (e.clientX-r.left)/r.width*2-1, ny = -((e.clientY-r.top)/r.height*2-1);
+    xh.style.display = 'block'; xh.style.left = e.clientX+'px'; xh.style.top = e.clientY+'px';
+    $('#xh').textContent = `X ${nx.toFixed(3)}  Y ${ny.toFixed(3)}${S.block != null ? ' · BLK ' + fmt(Math.floor(S.block)) : ''}`;
+  });
+  stage.addEventListener('pointerleave', () => xh.style.display = 'none');
+
+  /* ---------- LIVE DATA: server events → stage ---------- */
+  const tokById = new Map();
+  function tokenFrom(x){
+    // server token card / launch event -> UI token
+    const id = String(x.token || x.id).toLowerCase();
+    const t = tokById.get(id) || {contract:id};
+    Object.assign(t, {name: '$' + String(x.sym || x.symbol || '?').replace(/^\$/,''), sym: x.sym || x.symbol, at: Date.parse(x.created || x.t || Date.now()), block: x.block ?? t.block, creator: x.deployer ?? t.creator ?? null, tx: x.tx ?? t.tx ?? null, pad: x.pad || t.pad || 'dex', no: x.seq ?? t.no ?? 0});
+    if(x.threat) t.threat = x.threat;
+    if(x.graduated) t.graduated = true;
+    if(!tokById.has(id)){ tokById.set(id, t); S.tokens.push(t); S.tokens.sort((a,b) => a.at - b.at); if(S.tokens.length > 120){ const old = S.tokens.shift(); tokById.delete(old.contract); } }
+    return t;
+  }
+  function ingest(ev, live = true){
+    const e = {at: Date.parse(ev.t) || Date.now(), raw: ev};
+    if(ev.type === 'launch'){
+      const t = tokenFrom(ev), pad = padOf(t); e.type = 'launch'; e.pad = t.pad; e.name = t.name;
+      if(live){ addTag(`${pad.code} · LAUNCH ${t.name}`, `BLK ${ev.block != null ? fmt(ev.block) : '—'} · ${short(t.contract)}`, () => openCert(t.contract)); log(`LAUNCH ${pad.code} ${t.name}  ${short(t.contract)}`, true); tick(`${pad.code} <b>${esc(t.name)}</b> GENESIS`); }
+    } else if(ev.type === 'flow'){
+      e.type = 'swap'; e.stock = ev.sym; e.usd = ev.usd;
+      if(live){ if(ev.usd >= 1000) addTag(`FLOW · ${ev.sym} +${usd(ev.usd)}`, `${String(ev.dex||'DEX').toUpperCase()} · Δ24H VOLUME`); carrier(); log(`FLOW ${ev.sym} +${usd(ev.usd)} (24h volume Δ)`, true); tick(`FLOW <b>${esc(ev.sym)}</b> +${usd(ev.usd)}`); }
+    } else if(ev.type === 'graduate'){
+      const t = tokenFrom({...ev, created: undefined, t: undefined}); t.graduated = true; e.type = 'graduate'; e.pad = ev.pad;
+      if(live){ addTag(`GRADUATED · ${t.name}`, `${(PAD_BY[ev.pad]||{code:'DEX'}).code} → ${String(ev.dex||'DEX').toUpperCase()}`, () => openCert(t.contract)); pulse(CR+3, CR+26, .9); log(`GRADUATE ${t.name} → ${ev.dex || 'DEX'}`, true); tick(`<b>${esc(t.name)}</b> GRADUATED`); }
+    } else if(ev.type === 'pool'){
+      e.type = 'pool';
+      if(live){ addTag(`NEW POOL · $${ev.sym}/${ev.pair}`, `${String(ev.dex||'DEX').toUpperCase()} · LIQ ${usd(ev.liq||0)}`, () => openCert(ev.token)); pulse(CR+3, CR+18, .9); glitch(.2); log(`POOL ${ev.sym}/${ev.pair} ${ev.dex || ''} liq ${usd(ev.liq||0)}`, true); tick(`NEW POOL <b>${esc(ev.sym)}/${esc(ev.pair)}</b>`); }
+    } else if(ev.type === 'threat'){
+      e.type = 'threat';
+      const t = tokById.get(String(ev.token).toLowerCase()); if(t) t.threat = ev;
+      if(live){ const code = (PAD_BY[ev.launchpad] || {code:'DEX'}).code; addTag(`⚠ THREAT ${ev.score} · $${ev.symbol || '?'}`, `${code} · ${ev.top || ''}`, () => openCert(ev.token), 'threat'); log(`THREAT ${ev.level} ${code} $${ev.symbol} score=${ev.score}`, true); tick(`⚠ <b>$${esc(ev.symbol || '?')}</b> THREAT ${ev.score}`); pulse(CR+3, CR+30, 1); setTimeout(() => pulse(CR+3, CR+30, 1), 160); glitch(.35); }
+    } else return;
+    S.ev.push(e); S.ev = S.ev.filter(x => Date.now() - x.at < 60*60*1000).slice(-800);
+    if(live){ refresh(); refreshThreat(); }
+  }
+  function applyStats(st){
+    if(!st) return;
+    if(st.block != null && (S.block == null || Math.abs(st.block - S.block) > (S.bps || 10) * 3)) S.block = st.block;
+    if(st.bps) S.bps = st.bps;
+    if(st.gasGwei != null){ S.gas = st.gasGwei; $('#gas').textContent = st.gasGwei.toFixed(3); }
+    if(st.tps != null){ S.tps = st.tps; S.hist.push(st.tps); if(S.hist.length > 60) S.hist.shift(); tweenNum($('#n1'), st.tps); drawSpark(); }
+    if(st.scanner){ S.scanBlock = st.scanner.last; S.scanTracked = st.scanner.tracked; }
+  }
+  function setLink(state){
+    S.link = state;
+    $('#linkTxt').textContent = state === 'live' ? `LIVE · ${ENV.CHAIN_NAME.toUpperCase()} ${ENV.CHAIN_ID}` : state === 'down' ? 'RECONNECTING…' : 'ESTABLISHING UPLINK…';
+  }
+  async function boot(){
+    try {
+      const st = await (await fetch('/api/state')).json();
+      applyStats(st.stats); S.market = st.market;
+      for(const t of (st.tokens || []).slice().reverse()) tokenFrom(t);
+      for(const ev of (st.feed || []).slice().reverse()) ingest(ev, false);
+      for(const ev of (st.feed || []).slice(0, 8).reverse()) if(ev.type === 'launch' || ev.type === 'threat' || ev.type === 'graduate') ingest(ev, true);
+      refresh(); refreshThreat();
+      log(`uplink established · ${S.tokens.length} geneses · ${(st.feed||[]).length} events`, true);
+    } catch(e){ log('state fetch failed: ' + e.message, true); }
+    const es = new EventSource('/api/stream');
+    es.onopen = () => setLink('live');
+    es.onerror = () => setLink('down');
+    es.addEventListener('event', m => { try { ingest(JSON.parse(m.data), true); } catch(_){} });
+    es.addEventListener('stats', m => { try { applyStats(JSON.parse(m.data)); } catch(_){} });
+    es.addEventListener('market', m => { try { S.market = JSON.parse(m.data); refresh(); } catch(_){} });
+    es.addEventListener('scan', m => { try { const r = JSON.parse(m.data), t = tokById.get(String(r.token).toLowerCase()); if(t){ t.threat = r; refreshThreat(); } } catch(_){} });
+  }
+
+  /* ---------- narrator (command line) — local templates over real counts, no AI cost ---------- */
+  const narr = $('#narr'); let typing = false;
+  function typeLine(el, html, speed=16){
+    return new Promise(res => {
+      const d = document.createElement('div'); d.innerHTML = html; const txt = d.textContent; let i = 0; typing = true;
+      const iv = setInterval(() => { i += 2; el.innerHTML = txt.slice(0,i).replace(/&/g,'&amp;').replace(/</g,'&lt;') + '<span class="caret"></span>';
+        if(i >= txt.length){ clearInterval(iv); el.innerHTML = html; typing = false; res(); } }, speed);
+    });
+  }
+  let narrI = 0;
+  function narrate(){
+    if(typing) return;
+    const m = within(5*60*1000), c = t => m.filter(e=>e.type===t);
+    const lp = Object.entries(c('launch').reduce((a,e)=>(a[e.pad]=(a[e.pad]||0)+1,a),{})).sort((a,b)=>b[1]-a[1])[0];
+    const fl = Object.entries(c('swap').reduce((a,e)=>(a[e.stock]=(a[e.stock]||0)+e.usd,a),{})).sort((a,b)=>b[1]-a[1])[0];
+    const risky = S.tokens.filter(t => t.threat && t.threat.score >= 50 && Date.now() - t.at < 3600e3);
+    const lines = [
+      `<b>${c('launch').length} new tokens</b> launched across ${PADS.length} watched launchpads in the last 5 minutes${lp ? ' — <b>' + esc((PAD_BY[lp[0]]||{name:lp[0]}).name) + '</b> leads with ' + lp[1] : ''}.`,
+      fl ? `Strongest equity flow: <b>${esc(fl[0])}</b>, 24h volume up ${usd(fl[1])} in 5 minutes.` : (S.market && S.market.equities[0] ? `Top stock token by 24h DEX volume: <b>${esc(S.market.equities[0].sym)}</b> at ${usd(S.market.equities[0].volume24hUsd)}.` : `Equity pools quiet in the last 5 minutes.`),
+      `<b>${c('pool').length} new DEX pools</b> and <b>${c('graduate').length} graduations</b> in the last 5 minutes.`,
+      risky.length ? `<b>${risky.length} geneses</b> in the past hour carry HIGH threat signals — open THREAT RADAR for the evidence.` : `No HIGH threat signals among geneses scanned in the past hour.`,
+      S.tps != null ? `Network nominal: ~${fmt(S.tps)} tx/s, gas ${S.gas != null ? S.gas.toFixed(3) : '—'} gwei, block #${fmt(Math.floor(S.block || 0))}.` : `Waiting for network telemetry…`,
+    ];
+    S.narr++; refresh();
+    typeLine(narr, lines[(narrI++) % lines.length]);
+  }
+
+  /* ---------- decoder: real tx decode + contract x-ray ---------- */
+  const result = $('#result'), steps = $('#steps'), rb = $('#rb');
+  $('#rClose').onclick = () => gsap.to(result, {x:30, opacity:0, duration:.25, onComplete(){ result.style.display = 'none'; }});
+  const getJSON = async (url) => { const r = await fetch(url); const j = await r.json().catch(() => ({})); if(!r.ok) throw new Error(j.error || 'HTTP ' + r.status); return j; };
+  async function decode(input){
+    input = (input||'').trim();
+    const kind = /^0x[0-9a-fA-F]{40}$/.test(input) ? 'ct' : /^0x[0-9a-fA-F]{64}$/.test(input) ? 'tx' : input === '__sum' ? 'sum' : null;
+    if(result.style.display !== 'block'){ result.style.display = 'block'; gsap.fromTo(result, {x:30, opacity:0}, {x:0, opacity:1, duration:.35, ease:'power2.out'}); }
+    $('#rTitle').textContent = kind==='tx' ? 'DECODER / TRANSACTION' : kind==='ct' ? 'X-RAY / CONTRACT' : 'SYNTHESIS / 5 MIN';
+    steps.innerHTML = ''; rb.innerHTML = '';
+    if(!kind){ rb.innerHTML = '<div class="warn">Paste a transaction hash (0x + 64 hex) or a contract address (0x + 40 hex).</div>'; return; }
+    S.dec++; S.decoding = kind === 'tx' ? 'tx ' + short(input) : kind === 'ct' ? short(input) : '5m window'; refresh(); glitch(.8);
+    gsap.timeline().to(core.scale, {x:'+=.08', y:'+=.08', duration:.4, ease:'power2.out'}).to(core.scale, {x:'-=.08', y:'-=.08', duration:.8, ease:'elastic.out(1,.4)'});
+    for(let i=0;i<4;i++) setTimeout(()=>pulse(CR+3, CR+40, .8), i*180);
+    const labels = kind==='tx' ? ['fetching transaction + receipt from RPC','parsing calldata & Transfer logs','resolving token metadata']
+                 : kind==='ct' ? ['reading token metadata','scanning holders & creator wallet','running swap test & threat heuristics']
+                 : ['aggregating 5-min event window','clustering by type'];
+    const rows = labels.map(s => { const d = document.createElement('div'); d.textContent = '[ .. ] ' + s; steps.appendChild(d); return d; });
+    const okAll = () => rows.forEach((d,i) => { d.textContent = '[ OK ] ' + labels[i]; d.classList.add('ok'); });
+    const p = document.createElement('div'); rb.appendChild(p);
+    try {
+      if(kind==='tx'){
+        const d = await getJSON(`/api/tx/${input}`); okAll();
+        const tr = d.transfers || [];
+        const what = tr.length ? tr.slice(0,3).map(x => `<b>${x.amount.toLocaleString('en-US',{maximumFractionDigits:4})} ${esc(x.symbol || short(x.token))}</b> ${short(x.from)} → ${short(x.to)}`).join('; ') : 'no token transfers';
+        await typeLine(p, `<b>${esc(d.method)}</b> from ${short(d.from)}${d.to ? ' to ' + short(d.to) : ''}${d.toLaunchpad ? ' (<b>' + esc(d.toLaunchpad) + '</b> launchpad)' : ''}. Status: <b>${d.status.toUpperCase()}</b>. Token movements: ${what}.`, 8);
+        rb.insertAdjacentHTML('beforeend', `<div class="kv"><div>HASH</div><div>${short(d.hash)}</div><div>STATUS</div><div>${d.status.toUpperCase()}</div><div>BLOCK</div><div>${d.block != null ? fmt(d.block) : 'pending'}</div><div>METHOD</div><div>${esc(d.method)}</div><div>VALUE</div><div>${d.valueEth} ETH</div><div>FEE</div><div>${d.feeEth != null ? d.feeEth.toFixed(8) + ' ETH' : '—'}</div><div>LOGS</div><div>${d.logs}</div></div>
+          <div class="warn">Decoded live from Robinhood Chain RPC. <a href="${esc(d.explorer)}" target="_blank" rel="noopener noreferrer" style="color:inherit">Open in explorer ↗</a></div>`);
+      } else if(kind==='ct'){
+        const g = await getJSON(`/api/genesis/${input}`); okAll();
+        const th = g.threat, m = th.metrics || {};
+        await typeLine(p, `<b>${esc(th.symbol || '?')}</b>${th.name ? ' (' + esc(th.name) + ')' : ''} — ${th.launchpadName ? 'launched via <b>' + esc(th.launchpadName) + '</b>' : 'no known launchpad'}. Threat score <b>${th.score}/100 (${th.level})</b>${th.signals[0] ? ': ' + esc(th.signals[0].evidence) : '.'}`, 8);
+        rb.insertAdjacentHTML('beforeend', `<div class="kv"><div>ADDRESS</div><div>${short(g.token)}</div><div>HOLDERS</div><div>${m.holders != null ? (m.partialHistory ? '≥ ' : '') + fmt(m.holders) : '—'}</div><div>TOP-10 SHARE</div><div>${m.top10Pct != null ? (m.top10Pct*100).toFixed(1) + '%' : '—'}</div><div>CREATOR</div><div>${m.deployer ? short(m.deployer) + (m.creatorPct != null ? ' · ' + (m.creatorPct*100).toFixed(1) + '%' : '') : '—'}</div><div>SWAP TEST</div><div>${m.swapTest ? m.swapTest.verdict + ' · ' + m.swapTest.lossPct + '% round trip' : 'not run'}</div><div>LIQUIDITY</div><div>${m.liquidityUsd != null ? usd(m.liquidityUsd) : '—'}</div><div>SIGNALS</div><div><b>${th.signals.length}</b> detected</div></div>
+          <div style="margin-top:10px"><button class="chip" id="xrayCert">OPEN GENESIS CERTIFICATE ▸</button></div>
+          <div class="warn">${esc(th.disclaimer)}</div>`);
+        $('#xrayCert').onclick = () => openCert(g.token);
+      } else {
+        const d = await getJSON('/api/stats?window=300'); okAll();
+        const pads = Object.entries(d.launches_by_launchpad).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `${k} ${v}`).join(', ') || 'none';
+        await typeLine(p, `Trailing 5 min: <b>${d.token_launches} token launches</b> (${esc(pads)}), <b>${d.new_dex_pools} new pools</b>, <b>${d.graduations} graduations</b>, <b>${d.threat_flags} threat flags</b>. Network ~${d.network.tps != null ? fmt(d.network.tps) : '—'} tx/s. DEX volume 24h: ${usd(d.market.volume24hUsd)}.`, 8);
+        rb.insertAdjacentHTML('beforeend', `<div class="warn">${esc(d.note)}</div>`);
+      }
+    } catch(err){
+      rows.forEach(d => d.classList.remove('ok'));
+      rb.innerHTML = `<div class="warn">⚠ ${esc(err.message)}</div>`;
+    } finally { S.decoding = null; }
+  }
+  $('#form').addEventListener('submit', e => { e.preventDefault(); decode($('#q').value); });
+  document.querySelectorAll('.chip[data-ex]').forEach(c => c.onclick = () => {
+    const ex = c.dataset.ex, last = S.tokens[S.tokens.length-1];
+    if(ex==='ct'){ if(!last) return toast('No genesis recorded yet — stand by.'); $('#q').value = last.contract; decode(last.contract); }
+    else if(ex==='tx'){ if(!last || !last.tx) return toast('No launch transaction seen yet — paste any tx hash.'); $('#q').value = last.tx; decode(last.tx); }
+    else if(ex==='cert'){ if(!last) return toast('No genesis recorded yet — stand by.'); openCert(last.contract); }
+    else { $('#q').value = ''; decode('__sum'); }
+  });
+
+  /* ---------- modal shell ---------- */
+  const modal = $('#modal'), sheet = $('#sheet'), mBody = $('#mBody');
+  let copyText = '', liveTimer = null;
+  function openModal(title, html, copy){
+    glitch(.6); $('#mTitle').textContent = title; mBody.innerHTML = html; copyText = copy || '';
+    $('#mCopy').style.display = copy ? '' : 'none';
+    if(modal.style.display !== 'flex'){
+      modal.style.display = 'flex';
+      gsap.fromTo(modal, {opacity:0}, {opacity:1, duration:.25});
+      gsap.fromTo(sheet, {clipPath:'inset(0 0 100% 0)', y:10}, {clipPath:'inset(0 0 0% 0)', y:0, duration:.7, ease:'power3.inOut'});
+    }
+    sheet.scrollTop = 0;
+  }
+  function closeModal(){
+    clearInterval(liveTimer);
+    gsap.to(modal, {opacity:0, duration:.2, onComplete(){ modal.style.display = 'none'; }});
+  }
+  $('#mClose').onclick = closeModal;
+  modal.addEventListener('click', e => { if(e.target === modal) closeModal(); });
+  addEventListener('keydown', e => { if(e.key === 'Escape' && modal.style.display === 'flex') closeModal(); });
+  function toast(msg){ const t = $('#toast'); t.textContent = msg; gsap.timeline().to(t,{opacity:1,duration:.2}).to(t,{opacity:0,duration:.3,delay:2.2}); }
+  $('#mCopy').onclick = async () => {
+    try { await navigator.clipboard.writeText(copyText); toast('Copied to clipboard — ready to post on X.'); }
+    catch(e){ toast('Clipboard access denied — copy manually from screen.'); }
+  };
+
+  /* ---------- GENESIS CERTIFICATE (real data from /api/genesis) ---------- */
+  function seeded(str){ let h = 2166136261; for(const ch of str){ h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h>>>0) % 10000)/10000; }; }
+  function drawFingerprint(c, key){
+    const r = seeded(key), s = 150*DPR; c.width = c.height = s; const g = c.getContext('2d');
+    g.fillStyle = '#f3f2ee'; g.fillRect(0,0,s,s); g.fillStyle = g.strokeStyle = '#121212';
+    const n = 12, cell = s/(n+2);
+    for(let i=0;i<n/2;i++) for(let j=0;j<n;j++){ if(r() < .5){ g.fillRect((i+1)*cell, (j+1)*cell, cell-1, cell-1); g.fillRect((n-i)*cell, (j+1)*cell, cell-1, cell-1); } }
+    g.lineWidth = 1*DPR; g.strokeRect(cell*.5, cell*.5, s-cell, s-cell);
+  }
+  function sealSVG(name){
+    const txt = `${(ENV.CHAIN_NAME || 'ROBINHOOD CHAIN').toUpperCase()} · ${ENV.CHAIN_ID} · ${(ENV.PROJECT_NAME || 'OBSERV AGENT').toUpperCase()} · ${esc(name)} · `;
+    let ticks = ''; for(let i=0;i<60;i++){ const a = i/60*Math.PI*2, r0 = 60, r1 = i%5 ? 64 : 67; ticks += `<line x1="${75+Math.cos(a)*r0}" y1="${75+Math.sin(a)*r0}" x2="${75+Math.cos(a)*r1}" y2="${75+Math.sin(a)*r1}" stroke="#121212" stroke-width="1"/>`; }
+    return `<svg viewBox="0 0 150 150" width="150" height="150" style="display:block">
+      <defs><path id="sc" d="M75,75 m-48,0 a48,48 0 1,1 96,0 a48,48 0 1,1 -96,0"/></defs>
+      <circle cx="75" cy="75" r="70" fill="none" stroke="#121212" stroke-width="1.5"/>
+      <circle cx="75" cy="75" r="56" fill="none" stroke="#121212" stroke-width="1"/>
+      <circle cx="75" cy="75" r="40" fill="#121212"/>
+      ${ticks}
+      <text font-family="IBM Plex Mono" font-size="7.4" letter-spacing="1.2" fill="#121212"><textPath href="#sc">${txt}</textPath></text>
+      <text x="75" y="72" text-anchor="middle" font-family="Archivo Narrow" font-weight="700" font-size="13" fill="#f3f2ee">VERIFIED</text>
+      <text x="75" y="85" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#f3f2ee" letter-spacing="1">ON-CHAIN</text>
+    </svg>`;
+  }
+
+  /* ---------- THREAT SCANNER view (server computes, the page only shows) ---------- */
+  function threatScan(t){ // compact summary for lists; full detail comes from /api/genesis
+    const s = t && t.threat;
+    return s ? {score:s.score, level:s.level, flags:(s.signals||[]).map(l => ({label:l})), pad:padOf(t)} : {score:0, level:'PENDING', flags:[], pad:padOf(t), pending:true};
+  }
+  function threatHTML(th){
+    const on = Math.round(th.score/5);
+    return `<div class="tscan">
+      <div class="th"><span>⚠ THREAT SCAN · HEURISTIC SIGNAL ANALYSIS</span><span>A05 VERIFIER · ${new Date(th.scannedAt).toLocaleTimeString('en-GB')}</span></div>
+      <div class="tb">
+        <div class="tgauge"><div class="sc">${th.score}</div><span class="lv ${th.score>=50?'hi':''}">${th.level} SIGNAL</span>
+          <div class="segs">${Array.from({length:20},(_,i)=>`<i class="${i<on?'on':''}"></i>`).join('')}</div>
+          <small>Score = weighted sum of detected signals, 0–100</small>
+          <button class="chip" id="rescan" style="margin-top:10px">RESCAN NOW</button></div>
+        <div class="tlist">
+          <h5>SIGNALS DETECTED (${th.signals.length})</h5>
+          ${th.signals.length ? th.signals.map(f => `<div class="f bad"><span class="ic">!</span><div><b>${esc(f.label)}</b><span>${esc(f.evidence)}</span></div><em>+${f.weight}</em></div>`).join('') : `<div class="f"><span class="ic">—</span><div><b>NO SIGNALS</b><span>No heuristic triggered at scan time.</span></div><em>0</em></div>`}
+          <h5>CHECKS PASSED</h5>
+          ${th.checks.length ? th.checks.map(p => `<div class="f"><span class="ic">✓</span><div><span>${esc(p)}</span></div><em></em></div>`).join('') : '<div class="f"><span class="ic">—</span><div><span>None yet</span></div><em></em></div>'}
+          ${th.notEvaluated.length ? `<h5>NOT EVALUATED</h5>${th.notEvaluated.map(p => `<div class="f"><span class="ic">?</span><div><span>${esc(p)}</span></div><em></em></div>`).join('')}` : ''}
+        </div>
+      </div>
+      <div class="tdisc">${esc(th.disclaimer)}</div>
+    </div>`;
+  }
+  function refreshThreat(){
+    const n = S.tokens.filter(t => Date.now() - t.at < 300000 && t.threat && t.threat.score >= 50).length;
+    const el = $('#hThreat'); if(el) el.textContent = n;
+  }
+  setInterval(refreshThreat, 3000);
+
+  let radarPad = 'all';
+  async function openRadar(){
+    let list = [];
+    try { list = await getJSON(`/api/radar?pad=${encodeURIComponent(radarPad)}`); } catch(e){ toast('Radar unavailable: ' + e.message); }
+    const html = `<div class="radar">
+      <div class="lead">Every genesis across ${PADS.length} launchpads on ${REG.chains.filter(c=>c.status==='live').map(c=>esc(c.name)).join(', ')} is scanned by agent A05 (holders, creator wallet, bundled buys, swap test, ticker checks). Ranked by signal score — click a row for the full evidence trail.</div>
+      <div class="padchips"><button data-p="all" class="${radarPad==='all'?'on':''}">ALL</button>${[...PADS, PAD_BY.dex].filter(Boolean).map(p => `<button data-p="${p.id}" class="${radarPad===p.id?'on':''}">${esc(p.code)}</button>`).join('')}</div>
+      ${list.length ? list.map(s => `<div class="rrow" data-c="${s.token}"><b><span class="pd">${esc((PAD_BY[s.launchpad] || {code:'DEX'}).code)}</span>$${esc(s.symbol || '?')}</b><span class="bar2"><i style="width:${s.score}%"></i></span><span class="lvl ${s.score>=50?'hi':''}">${s.level}</span><small>${esc(s.top || 'NO SIGNALS')}</small></div>`).join('') : '<div class="lead">No tokens scanned on this launchpad yet — stand by.</div>'}
+      <div class="tdisc" style="border:1px solid var(--ink);margin-top:14px">Heuristic signals only — not verdicts, not advice. A low score does not mean safe.</div>
+    </div>`;
+    openModal('THREAT RADAR / MULTI-LAUNCHPAD SCAN', html, '');
+    mBody.querySelectorAll('.rrow').forEach(row => row.onclick = () => openCert(row.dataset.c));
+    mBody.querySelectorAll('.padchips button').forEach(b => b.onclick = () => { radarPad = b.dataset.p; openRadar(); });
+    gsap.from('#sheet .rrow', {opacity:0, x:-10, stagger:.03, duration:.3, delay:.15});
+    gsap.from('#sheet .rrow .bar2 i', {width:0, stagger:.03, duration:.6, delay:.25, ease:'power2.out'});
+  }
+  $('#bThreat').onclick = () => { radarPad = 'all'; openRadar(); };
+
+  /* ---------- COVERAGE MAP (/api/coverage) ---------- */
+  let COV = null;
+  function coverageData(){
+    const f = within(300000).filter(e => e.type === 'launch');
+    return PADS.map(p => ({pad:p, born:f.filter(e => e.pad === p.id).length, flagged:S.tokens.filter(t => t.pad === p.id && t.threat && t.threat.score >= 50).length}));
+  }
+  async function openCoverage(){
+    try { COV = await getJSON('/api/coverage'); } catch(e){}
+    const pads = COV ? COV.launchpads.filter(p => !p.standby) : coverageData().map(x => ({...x.pad, geneses5m:x.born, flagged:x.flagged, tracked:0}));
+    const queued = COV ? COV.launchpads.filter(p => p.standby) : [];
+    const max = Math.max(1, ...pads.map(x => x.geneses5m));
+    const html = `<div class="cov">
+      <h6>NETWORKS</h6>
+      <div class="chains">${REG.chains.map(c => `<div class="chn ${c.status}"><span class="st">${c.priority && c.status !== 'live' ? 'NEXT · ' : ''}${c.status.toUpperCase()}</span><b>${esc(c.name)}</b><small>${c.chainId ? 'CHAIN ID ' + c.chainId + ' · ' : ''}${esc(c.note || '')}</small></div>`).join('')}</div>
+      <h6>LAUNCHPADS UNDER SURVEILLANCE · ${pads.length}</h6>
+      <table class="padt"><thead><tr><th>LAUNCHPAD</th><th class="hm">CHAIN</th><th class="hm">LAUNCH MODEL</th><th>GENESES · 5M</th><th></th><th>TRACKED</th><th>FLAGGED</th></tr></thead><tbody>
+      ${pads.map(x => `<tr><td><b>${esc(x.name)}</b><br><small style="color:var(--ink2);font-size:9px;letter-spacing:.12em">${esc(x.code)}</small></td><td class="hm">${esc(chainOf(x).name)}</td><td class="hm">${esc(x.model)}</td><td>${x.geneses5m}</td><td><div class="sh"><i style="width:${(x.geneses5m/max*100).toFixed(0)}%"></i></div></td><td>${fmt(x.tracked || 0)}</td><td class="fl">${x.flagged ? '⚠ ' + x.flagged : '—'}</td></tr>`).join('')}
+      </tbody></table>
+      ${queued.length ? `<h6 style="margin-top:18px">QUEUED — ACTIVATES WHEN ITS CONTRACTS ARE ADDED (LAUNCHPADS_JSON) OR ITS CHAIN GOES LIVE</h6><table class="padt"><tbody>${queued.map(p => `<tr><td><b>${esc(p.name)}</b><br><small style="color:var(--ink2);font-size:9px;letter-spacing:.12em">${esc(p.code)}</small></td><td>${esc(chainOf(p).name)}</td><td class="hm">${esc(p.model)}</td><td>STANDBY</td></tr>`).join('')}</tbody></table>` : ''}
+      <div class="tdisc" style="border:1px solid var(--ink);margin-top:14px">Launchpads are detected on-chain from their factory contracts (lib/launchpads.js, extendable with LAUNCHPADS_JSON). "Tracked" counts tokens seen since the server started.${COV && COV.scanner ? ' Scanner at block #' + fmt(COV.scanner.last || 0) + (COV.scanner.lastError ? ' · last error: ' + esc(COV.scanner.lastError) : '') + '.' : ''}</div>
+    </div>`;
+    openModal('COVERAGE / CHAINS & LAUNCHPADS', html, '');
+    gsap.from('#sheet .chn', {opacity:0, y:10, stagger:.05, duration:.35, delay:.2});
+    gsap.from('#sheet .padt tbody tr', {opacity:0, x:-8, stagger:.04, duration:.3, delay:.35});
+    gsap.from('#sheet .sh i', {width:0, stagger:.04, duration:.6, delay:.45, ease:'power2.out'});
+  }
+  $('#bCov').onclick = openCoverage;
+
+  async function openCert(ca){
+    if(ca && typeof ca === 'object') ca = ca.contract;
+    if(!ca){ toast('No genesis recorded yet — stand by.'); return; }
+    openModal('GENESIS / SCANNING…', `<div class="radar"><div class="lead">Agent A05 is reading holders, the creator wallet and the swap path for ${short(ca)}…</div></div>`, '');
+    let g;
+    try { g = await getJSON(`/api/genesis/${ca}`); } catch(e){ mBody.innerHTML = `<div class="radar"><div class="lead">⚠ ${esc(e.message)}</div></div>`; return; }
+    renderCert(g);
+  }
+  function renderCert(g){
+    const th = g.threat, m = th.metrics || {}, L = g.launch;
+    const pad = PAD_BY[th.launchpad] || PAD_BY.dex || {name:'DEX', code:'DEX', model:'', chain:'robinhood'};
+    const name = '$' + (th.symbol || '?');
+    const at = th.created ? new Date(th.created) : null;
+    const when = at ? at.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) + ' · ' + at.toLocaleTimeString('en-GB') : (g.pools[0] && g.pools[0].created ? 'first pool ' + new Date(g.pools[0].created).toLocaleString('en-GB') : '—');
+    const dec = m.decimals == null ? 18 : m.decimals, supply = m.supply ? Number(BigInt(m.supply) / 10n ** BigInt(Math.max(0, dec - 2))) / 100 : null;
+    const b = m.bonding, bondPct = b && b.progress != null ? b.progress * 100 : null;
+    const bondTxt = L && L.graduated || (g.pools.length && th.launchpad && th.launchpad !== 'dex') ? 'GRADUATED · trading on DEX' : bondPct != null ? `${bondPct.toFixed(1)}% · ${b.raised.toFixed(3)}/${b.target.toFixed(2)} ${esc(b.pair)}` : g.pools.length ? 'Trading on DEX' : '—';
+    const exp = ENV.EXPLORER_URL ? ENV.EXPLORER_URL.replace(/\/$/, '') : '';
+    const link = (path, label) => exp ? `<a href="${esc(exp + path)}" target="_blank" rel="noopener noreferrer" style="color:inherit">${label} ↗</a>` : label;
+    const html = `<div class="cert"><div class="cert-in">
+      <div class="top"><span>NO. ${String(L ? L.seq : 0).padStart(6,'0')}</span><span>${chainTag(chainOf(pad))}</span><span>${esc(pad.name.toUpperCase())} ${pad.id === 'dex' ? '' : 'LAUNCHPAD'}</span></div>
+      <h3>GENESIS CERTIFICATE</h3>
+      <div class="nm">${esc(name)}</div>
+      <div class="sub">${esc(th.name || '')} · TOKEN BIRTH RECORD · READ LIVE FROM ON-CHAIN STATE</div>
+      <div class="body">
+        <div>${sealSVG(name)}<div class="lbl">VERIFICATION SEAL</div></div>
+        <div class="fields">
+          <div>GENESIS</div><div>${when}</div>
+          <div>BLOCK</div><div>${th.block ? '#' + fmt(th.block) : '—'}</div>
+          <div>LAUNCHPAD</div><div>${esc(pad.name)} · ${esc(pad.model || '')}</div>
+          <div>GENESIS TX</div><div>${th.launchTx ? link('/tx/' + th.launchTx, short(th.launchTx)) : '—'}</div>
+          <div>CONTRACT</div><div>${link('/token/' + g.token, g.token)}</div>
+          <div>CREATOR</div><div>${m.deployer ? link('/address/' + m.deployer, short(m.deployer)) + (m.creatorLaunches != null ? ' · ' + (m.creatorLaunches ? m.creatorLaunches + ' other launches seen' : 'no other launches seen') : '') : '—'}</div>
+          <div>SUPPLY</div><div>${supply != null ? supply.toLocaleString('en-US') : '—'}</div>
+          <div>BONDING CURVE</div><div>${bondTxt}${bondPct != null && !(L && L.graduated) ? `<div class="pbar"><i style="width:${bondPct}%"></i></div>` : ''}</div>
+          <div>HOLDERS</div><div>${m.holders != null ? (m.partialHistory ? '≥ ' : '') + fmt(m.holders) + ' · top 10 hold ' + (m.top10Pct*100).toFixed(1) + '%' : '—'}</div>
+          <div>MARKET</div><div>${m.liquidityUsd != null ? 'liquidity ' + usd(m.liquidityUsd) + ' · 24h vol ' + usd(m.volume24hUsd) + ' · ' + m.realVolumePct + '% plausible' : 'no DEX pool yet'}</div>
+          <div>SWAP TEST</div><div>${m.swapTest ? `${m.swapTest.verdict} · $${m.swapTest.usd} round trip cost ${m.swapTest.lossPct}%` : 'not run'}</div>
+        </div>
+        <div><canvas id="fp"></canvas><div class="lbl">ON-CHAIN FINGERPRINT</div></div>
+      </div>
+      <div class="foot">
+        <div style="max-width:380px">Factual record compiled live from Robinhood Chain RPC and DexPaprika. Not an endorsement, not a safety verdict, not a recommendation.</div>
+        <div class="sign"><em>Agent 05</em><div>VERIFIED · A05 VERIFIER</div></div>
+      </div>
+    </div></div>${threatHTML(th)}`;
+    openModal(`GENESIS / ${name}`, html,
+      `📜 Genesis certificate: ${name} (${pad.name})\nContract: ${g.token}\n${th.block ? 'Block #' + fmt(th.block) + '\n' : ''}${m.holders != null ? 'Holders: ' + fmt(m.holders) + ' · top 10 ' + (m.top10Pct*100).toFixed(1) + '%\n' : ''}Threat signals: ${th.score}/100 (${th.level})${th.signals.length ? ' — ' + th.signals.map(s => s.label.toLowerCase()).join(', ') : ''}\n— via ${ENV.PROJECT_NAME} (heuristic on-chain data, not advice)`);
+    drawFingerprint($('#fp'), g.token);
+    $('#rescan').onclick = async () => { $('#rescan').textContent = 'SCANNING…'; try { await getJSON(`/api/threat/${g.token}?fresh=1`); openCert(g.token); } catch(e){ toast(e.message); } };
+    gsap.from('#sheet .cert .nm', {letterSpacing:'.4em', opacity:0, duration:1, ease:'power3.out', delay:.3});
+    gsap.from('#sheet .fields > div', {opacity:0, x:-6, stagger:.02, duration:.3, delay:.45});
+    gsap.from('#sheet .tgauge .sc', {textContent:0, duration:1.2, delay:.6, snap:{textContent:1}, ease:'power2.out'});
+    gsap.from('#sheet .segs i.on', {opacity:0, stagger:.04, duration:.1, delay:.6});
+    gsap.from('#sheet .tlist .f', {opacity:0, x:8, stagger:.05, duration:.3, delay:.8});
+    gsap.from('#sheet .cert svg', {rotate:-90, scale:.6, opacity:0, duration:1, ease:'back.out(1.6)', delay:.4, transformOrigin:'50% 50%'});
+    const t = tokById.get(g.token); if(t){ t.threat = {token:g.token, symbol:th.symbol, launchpad:th.launchpad, score:th.score, level:th.level, top: th.signals[0] && th.signals[0].label, signals: th.signals.map(s => s.label)}; refreshThreat(); }
+  }
+  $('#bCert').onclick = () => { const last = S.tokens[S.tokens.length-1]; openCert(last && last.contract); };
+
+  /* ---------- THE 4663 DAILY (/api/daily) ---------- */
+  async function openDaily(){
+    let D;
+    try { D = await getJSON('/api/daily'); } catch(e){ toast('Daily unavailable: ' + e.message); return; }
+    const now = new Date();
+    const edition = Math.floor((now - new Date('2026-07-01T00:00:00Z'))/86400000) + 1;
+    const dateStr = now.toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const since = new Date(D.since).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    const padRank = Object.entries(D.byPad).sort((a,b)=>b[1]-a[1]).map(([k,v]) => [PAD_BY[k] || {name:k.toUpperCase(), code:k.toUpperCase()}, v]);
+    const padTot = padRank.reduce((a,x)=>a+x[1],0) || 1;
+    const eq = (D.market && D.market.equities) || [];
+    const flows = Object.entries(D.flows).sort((a,b)=>b[1]-a[1]);
+    const maxH = Math.max(1, ...D.hours), peak = D.hours.indexOf(Math.max(...D.hours));
+    const lead = padRank[0] ? padRank[0][0].name : null;
+    const hl = D.launches
+      ? `${fmt(D.launches)} Token Launches Tracked${lead ? ` as ${lead} Leads` : ''}; ${D.flagged} Flagged by the Threat Scanner`
+      : `Robinhood Chain DEX Volume Holds at ${usd(D.market.volume24hUsd)} as the Scanner Warms Up`;
+    const recent = S.tokens.slice().reverse().slice(0, 7);
+    const html = `<div class="paper">
+      <div class="mast">
+        <div class="ear"><span>EDITION NO. ${edition}</span><span>COMPILED BY AGENT A04 · VERIFIED BY A05</span><span>FREE · ON-CHAIN</span></div>
+        <h2>THE 4663 DAILY</h2>
+        <div class="dl"><span>${dateStr.toUpperCase()}</span><span>THE DAILY DISPATCH OF ROBINHOOD CHAIN</span><span>WATCHING SINCE ${since}</span></div>
+      </div>
+      <div class="hl">${esc(hl)}</div>
+      <div class="cols">
+        <div>
+          <h4>TODAY IN NUMBERS</h4>
+          <div class="big"><b>${fmt(D.launches)}</b><span>TOKEN LAUNCHES TRACKED</span></div>
+          <div class="big"><b>${fmt(D.graduations)}</b><span>CURVE GRADUATIONS</span></div>
+          <div class="big"><b>${fmt(D.pools)}</b><span>NEW DEX POOLS</span></div>
+          <div class="big"><b>${fmt(D.flagged)} / ${fmt(D.scanned)}</b><span>FLAGGED / SCANNED</span></div>
+          <div class="big"><b>${usd(D.market.volume24hUsd)}</b><span>DEX VOLUME · 24H (TOP POOLS)</span></div>
+          <div class="big"><b>${usd(D.market.liquidityUsd)}</b><span>LIQUIDITY · TOP POOLS</span></div>
+        </div>
+        <div>
+          <h4>AI EDITORIAL</h4>
+          <div class="ed">
+            <p>Since ${since} today, ${esc(ENV.PROJECT_NAME)} tracked ${fmt(D.launches)} token launches across ${padRank.length} launchpads${lead ? `, led by ${esc(lead)} with ${padRank[0][1]}` : ''}. ${D.hours.some(x=>x) ? `The busiest hour so far was ${String(peak).padStart(2,'0')}:00 (UTC+7).` : ''} ${fmt(D.graduations)} tokens graduated from their bonding curves to a DEX, and ${fmt(D.pools)} new DEX pools appeared.</p>
+            <p>${eq[0] ? `Among stock tokens, ${esc(eq[0].sym)}${eq[1] ? ' and ' + esc(eq[1].sym) : ''} carried the most 24h DEX volume (${usd(eq[0].volume24hUsd)}${eq[1] ? ' and ' + usd(eq[1].volume24hUsd) : ''}).` : 'Stock-token pools were quiet in the tracked set.'} The threat scanner reviewed ${fmt(D.scanned)} tokens and flagged ${fmt(D.flagged)} with HIGH or CRITICAL heuristic signals.</p>
+            <p>This dispatch records what happened — not what anyone should do. Every figure traces back to on-chain state or DexPaprika market data.</p>
+          </div>
+        </div>
+        <div>
+          <h4>STOCK TOKENS · 24H VOLUME</h4>
+          ${eq.length ? eq.slice(0,6).map(e => `<div class="hb"><b>${esc(e.sym)}</b><span class="t"><i style="width:${(e.volume24hUsd/eq[0].volume24hUsd*100).toFixed(0)}%"></i></span><span>${usd(e.volume24hUsd)}</span></div>`).join('') : '<div class="born"><div><span>no stock pools in the top set</span></div></div>'}
+          <h4 style="margin-top:14px">EVENTS PER HOUR (UTC+7)</h4>
+          <div class="hours">${D.hours.map(h=>`<i style="height:${(h/maxH*100).toFixed(0)}%"></i>`).join('')}</div>
+          <div style="display:flex;justify-content:space-between;font-size:8.5px;color:var(--ink2);margin-top:3px"><span>00</span><span>12</span><span>23</span></div>
+          <h4 style="margin-top:14px">LAUNCHPAD SHARE</h4>
+          ${padRank.length ? padRank.slice(0,6).map(([p,v]) => `<div class="hb"><b>${esc(p.code)}</b><span class="t"><i style="width:${(v/padRank[0][1]*100).toFixed(0)}%"></i></span><span>${(v/padTot*100).toFixed(0)}%</span></div>`).join('') : '<div class="born"><div><span>no launches yet today</span></div></div>'}
+          <h4 style="margin-top:14px">LATEST GENESES</h4>
+          <div class="born">${recent.map(t => `<div><span>${esc(t.name)}</span><span>${esc(padOf(t).code)}${t.threat ? ' · ' + t.threat.score : ''}</span></div>`).join('') || '<div><span>—</span></div>'}</div>
+        </div>
+      </div>
+      <div class="disc">${esc(D.note)} Compiled autonomously from public on-chain data. Not investment advice. Mentions of tokens or equities are not recommendations.</div>
+    </div>`;
+    openModal(`THE 4663 DAILY / EDITION ${edition}`, html,
+      `🗞 THE 4663 DAILY · Edition ${edition}\n${hl}\n\n• ${fmt(D.launches)} token launches tracked${lead ? ' (lead: ' + lead + ')' : ''}\n• ${fmt(D.graduations)} graduations · ${fmt(D.pools)} new pools\n• ${fmt(D.flagged)} of ${fmt(D.scanned)} scanned tokens flagged\n${eq[0] ? '• Top stock token: ' + eq[0].sym + ' (' + usd(eq[0].volume24hUsd) + ' 24h)\n' : ''}\nCompiled by ${ENV.PROJECT_NAME} from on-chain data. Not advice.`);
+    gsap.from('#sheet .mast h2', {scaleY:0, transformOrigin:'50% 100%', duration:.7, ease:'power3.out', delay:.35});
+    gsap.from('#sheet .hl', {opacity:0, y:10, duration:.5, delay:.6});
+    gsap.from('#sheet .big b', {opacity:0, y:8, stagger:.06, duration:.35, delay:.7});
+    gsap.from('#sheet .hb .t i', {width:0, stagger:.06, duration:.6, delay:.8, ease:'power2.out'});
+    gsap.from('#sheet .hours i', {height:0, stagger:.02, duration:.4, delay:.8});
+    gsap.from('#sheet .ed p', {opacity:0, stagger:.2, duration:.5, delay:.9});
+  }
+  $('#bDaily').onclick = openDaily;
+
+  /* ---------- ROADMAP ---------- */
+  function openRoadmap(){
+    const P = [
+      {k:'PHASE 01 · MVP', t:'Genesis Protocol', now:true, items:[
+        ['OBSERV AGENT live','Real-time Robinhood Chain visualization with a neural narrator','IN DEVELOPMENT',1],
+        ['Decoder & Contract X-Ray','Transactions and contracts translated into human language','IN DEVELOPMENT',1],
+        ['Genesis Certificate','A shareable birth record for every token, on every tracked launchpad','IN DEVELOPMENT',1],
+        ['Multi-launchpad scanning', PADS.map(p=>p.name).join(', '),'IN DEVELOPMENT',1],
+        ['The 4663 Daily','An autonomous daily dispatch in broadsheet form','IN DEVELOPMENT',1],
+        ['Threat Scanner & Radar','Heuristic danger signals on every genesis, with evidence','IN DEVELOPMENT',1]]},
+      {k:'PHASE 02', t:'Holder Uplink', items:[
+        ['Watchlist alerts','Track addresses/contracts; AI-explained alerts via Telegram (holders only)','PLANNED'],
+        ['Token-gated tiers','Decode & alert quotas scaled to holding value','PLANNED'],
+        ['Transparency dashboard','Creator-fee inflow vs. server & AI compute costs','PLANNED']]},
+      {k:'PHASE 03', t:'Knowledge Layer', items:[
+        ['Wallet X-Ray','Educational behavioral profile of any public wallet','PLANNED'],
+        ['Learn mode & glossary','Tap any term — the agent explains it in plain language','PLANNED']]},
+      {k:'PHASE 04', t:'RWA Intelligence', items:[
+        ['Stock Token Peg Monitor','On-chain vs. underlying equity price spread, as pure data','RESEARCH'],
+        ['Archive & public API','Historical OBSERV AGENT data for other builders','RESEARCH']]},
+      {k:'PHASE 05', t:'Multi-Chain', items: REG.chains.filter(c => c.status !== 'live').sort((a,b) => (b.priority?1:0) - (a.priority?1:0)).map(c => { const lp = REG.launchpads.filter(p => p.chain === c.id).map(p => p.name); return [c.name + (c.priority ? ' — NEXT' : ''), (c.note || '') + (lp.length ? ' · launchpads: ' + lp.join(', ') : '') + ' — same agent, scanner & certificates', c.priority ? 'NEXT UP' : c.status === 'planned' ? 'PLANNED' : 'RESEARCH', c.priority ? 1 : 0]; })},
+    ];
+    const html = `<div class="rm">
+      <h2>ROADMAP</h2>
+      <div class="lead">Every module is read-only: no custody of funds, no buy/sell signals. Sequence and timing subject to change.</div>
+      <div class="phases">${P.map(p => `<div class="ph ${p.now?'now':''}"><div class="h"><small>${p.k}</small><b>${p.t}</b></div>
+        <ul>${p.items.map(([b,s,st,on]) => `<li><b>${b}</b><span>${s}</span><br><span class="st ${on?'on':''}">${st}</span></li>`).join('')}</ul></div>`).join('')}</div>
+    </div>`;
+    openModal('ROADMAP / OBSERV AGENT', html, '');
+    gsap.from('#sheet .ph', {opacity:0, y:14, stagger:.1, duration:.5, delay:.35});
+  }
+  $('#bRoad').onclick = openRoadmap;
+
+  /* =========================================================
+     TOKEN & DEVELOPER — everything comes from Railway variables (injected by the server)
+     ========================================================= */
+  const ENV = Object.assign({
+    PROJECT_NAME:'OBSERV AGENT', TOKEN_TICKER:'$OBSERV', TOKEN_CA:'', CHAIN_NAME:'Robinhood Chain', CHAIN_ID:4663,
+    LAUNCHPAD_NAME:'Pons', LAUNCHPAD_URL:'', API_BASE_URL:'', MCP_URL:'', PONS_URL:'', EXPLORER_URL:'', PROJECT_X:'', TELEGRAM_URL:'', WEBSITE_URL:'',
+    DEV_NAME:'', DEV_X:'', DEV_ROLE:'', DEV_BIO:'',
+  }, window.OBSERV_ENV || {});
+  const clean = v => String(v || '').trim();
+  const handle = v => clean(v).replace(/^@/, '').replace(/^https?:\/\/(x|twitter)\.com\//i, '').replace(/\/.*$/, '');
+  const safeUrl = v => /^https:\/\/[^\s"'<>]+$/i.test(clean(v)) ? clean(v) : '';
+  const CA = clean(ENV.TOKEN_CA), CA_OK = /^0x[a-fA-F0-9]{40}$/.test(CA);
+  const TICKER = clean(ENV.TOKEN_TICKER) || '$TOKEN';
+  const PX = handle(ENV.PROJECT_X), DX = handle(ENV.DEV_X);
+
+  // header
+  $('#brand').textContent = clean(ENV.PROJECT_NAME) || 'OBSERV AGENT';
+  $('#caTick').textContent = TICKER;
+  $('#caChain').textContent = `${clean(ENV.CHAIN_NAME).toUpperCase()} · ${ENV.CHAIN_ID}`;
+  if(CA_OK){
+    $('#caCode').innerHTML = `<span class="pfx">0x</span>${CA.slice(2)}`;
+    $('#caAddr').classList.remove('pending');
+    $('#caStt').innerHTML = '<i></i>LIVE · OFFICIAL';
+    $('#caCopy').disabled = false;
+    const ex = safeUrl(ENV.EXPLORER_URL); if(ex){ $('#caExp').href = ex.replace(/\/$/, '') + '/token/' + CA; $('#caExp').style.display = ''; }
+  } else if(CA){
+    $('#caCode').textContent = `${CA} ← INVALID: must be 0x + 40 hex characters`;
+    $('#caStt').innerHTML = '⚠ CHECK TOKEN_CA';
+  } else {
+    $('#caCode').innerHTML = `<span class="pfx">0x</span>${'·'.repeat(40)}`;
+    $('#caStt').innerHTML = '<i></i>PRE-LAUNCH · CA AT GENESIS';
+  }
+  async function copyCA(){
+    if(!CA_OK){ openToken(); return; }
+    try { await navigator.clipboard.writeText(CA); toast(`${TICKER} contract address copied.`); }
+    catch(e){ toast('Clipboard blocked — copy the address from the TOKEN panel.'); openToken(); }
+  }
+  $('#caAddr').onclick = copyCA; $('#caCopy').onclick = copyCA;
+
+  function monogram(name){
+    const ini = (clean(name) || 'DEV').split(/\s+/).map(w => w[0]).join('').slice(0,2).toUpperCase();
+    let lines = ''; for(let i=-96;i<96;i+=5) lines += `<line x1="${i}" y1="0" x2="${i+96}" y2="96" stroke="#121212" stroke-width="1" opacity=".35"/>`;
+    return `<svg viewBox="0 0 96 96"><rect width="96" height="96" fill="#f3f2ee"/>${lines}
+      <circle cx="48" cy="48" r="30" fill="#121212"/><circle cx="48" cy="48" r="36" fill="none" stroke="#121212" stroke-width="1.5"/>
+      <text x="48" y="57" text-anchor="middle" font-family="Archivo Narrow" font-weight="700" font-size="26" fill="#f3f2ee">${esc(ini)}</text></svg>`;
+  }
+  function chanRow(label, url, shown){ return url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer"><b>${label}</b><span>${esc(shown)} ↗</span></a>` : `<span><b>${label}</b><span>not set</span></span>`; }
+
+  function openToken(){
+    const LPN = clean(ENV.LAUNCHPAD_NAME) || 'Pons'; const pons = safeUrl(ENV.LAUNCHPAD_URL || ENV.PONS_URL), exp = safeUrl(ENV.EXPLORER_URL) && CA_OK ? safeUrl(ENV.EXPLORER_URL).replace(/\/$/, '') + '/token/' + CA : '', tg = safeUrl(ENV.TELEGRAM_URL), web = safeUrl(ENV.WEBSITE_URL);
+    const status = CA_OK ? '<span class="stt live">● LIVE ON-CHAIN</span>' : CA ? '<span class="stt">⚠ INVALID CA IN ENV</span>' : '<span class="stt">PRE-LAUNCH · CA PENDING</span>';
+    const html = `<div class="tok">
+      <div>
+        <h6>TOKEN</h6>
+        <div class="tick">${esc(TICKER)}</div>
+        <div class="chainl">${esc(clean(ENV.CHAIN_NAME))} · CHAIN ID ${esc(ENV.CHAIN_ID)} · ${esc(LPN.toUpperCase())} LAUNCHPAD</div>
+        ${status}
+        <div class="cabox">
+          <div class="l"><span>CONTRACT ADDRESS</span><span>${CA_OK ? 'VERIFY BEFORE USE' : 'AWAITING GENESIS'}</span></div>
+          <div class="v"><code>${CA_OK ? CA : CA ? esc(CA) + ' — not a valid 0x address' : '0x — — — — — — — — — — — — — — — — — — — —'}</code>
+            <button id="tCopy" ${CA_OK ? '' : 'disabled'}>COPY</button></div>
+        </div>
+        <div class="lnks">
+          ${pons ? `<a class="lnk" href="${esc(pons)}" target="_blank" rel="noopener noreferrer">OPEN ON ${esc(LPN.toUpperCase())} ↗</a>` : ''}
+          ${exp ? `<a class="lnk" href="${esc(exp)}" target="_blank" rel="noopener noreferrer">BLOCK EXPLORER ↗</a>` : ''}
+        </div>
+        <div class="tokfp"><canvas id="tfp"></canvas><span>${CA_OK ? 'On-chain fingerprint of the official contract. Every address has a unique pattern. If a link shows a different pattern, it is a different contract.' : 'The fingerprint of the official contract appears here once TOKEN_CA is set.'}</span></div>
+      </div>
+      <div>
+        <h6>DEVELOPER DOSSIER</h6>
+        <div class="idc">
+          <div class="top"><span>OPERATOR ID</span><span>${esc(clean(ENV.PROJECT_NAME))}</span></div>
+          <div class="mid">
+            ${monogram(ENV.DEV_NAME)}
+            <div>
+              <div class="nm2">${clean(ENV.DEV_NAME) ? esc(ENV.DEV_NAME) : '<span class="unset">DEV_NAME not set</span>'}</div>
+              <div class="rl">${esc(clean(ENV.DEV_ROLE))}</div>
+              ${clean(ENV.DEV_BIO) ? `<div class="bio">${esc(ENV.DEV_BIO)}</div>` : ''}
+              <div class="xh">${DX ? `<a href="https://x.com/${encodeURIComponent(DX)}" target="_blank" rel="noopener noreferrer">𝕏 @${esc(DX)} ↗</a>` : '<span class="unset">DEV_X not set</span>'}</div>
+            </div>
+          </div>
+        </div>
+        <h6 style="margin-top:16px">OFFICIAL CHANNELS</h6>
+        <div class="chan">
+          ${chanRow('𝕏 PROJECT', PX ? 'https://x.com/' + encodeURIComponent(PX) : '', '@' + PX)}
+          ${chanRow('TELEGRAM', tg, tg.replace(/^https:\/\//,''))}
+          ${chanRow('WEBSITE', web, web.replace(/^https:\/\//,''))}
+        </div>
+      </div>
+    </div>
+    <div class="phish"><b>⚠ ANTI-PHISHING PROTOCOL</b><br>The only official contract address is the one shown here${PX ? ` and pinned on <b>@${esc(PX)}</b>` : ''}. ${esc(clean(ENV.PROJECT_NAME))} will never DM you first, never ask for your seed phrase, and never ask you to "validate" or "sync" your wallet.</div>`;
+    const copyLines = [`${TICKER} — ${clean(ENV.PROJECT_NAME)}`, CA_OK ? `CA: ${CA}` : 'CA: pre-launch', `Chain: ${clean(ENV.CHAIN_NAME)} (${ENV.CHAIN_ID})`];
+    if(PX) copyLines.push(`𝕏 @${PX}`); if(DX) copyLines.push(`Dev: @${DX}`);
+    openModal(`TOKEN · DEV / ${TICKER}`, html, copyLines.join('\n'));
+    if(CA_OK) drawFingerprint($('#tfp'), CA); else { const c = $('#tfp'), g = c.getContext('2d'); c.width = c.height = 84*DPR; g.strokeStyle = '#121212'; g.setLineDash([4*DPR,4*DPR]); g.strokeRect(6*DPR,6*DPR,72*DPR,72*DPR); }
+    const tc = $('#tCopy'); if(tc) tc.onclick = copyCA;
+    gsap.from('#sheet .tick', {letterSpacing:'.3em', opacity:0, duration:.9, ease:'power3.out', delay:.3});
+    gsap.from('#sheet .idc', {opacity:0, y:12, duration:.5, delay:.45});
+    gsap.from('#sheet .chan > *', {opacity:0, x:8, stagger:.06, duration:.3, delay:.6});
+  }
+  $('#bToken').onclick = openToken;
+
+  function toolProject(){
+    return {project:clean(ENV.PROJECT_NAME), ticker:TICKER, status: CA_OK ? 'live' : 'pre-launch', contract_address: CA_OK ? CA : null,
+      chain:clean(ENV.CHAIN_NAME), chain_id:ENV.CHAIN_ID, launchpad: clean(ENV.LAUNCHPAD_NAME) || 'Pons', launchpad_url: safeUrl(ENV.LAUNCHPAD_URL || ENV.PONS_URL) || null, explorer_url: safeUrl(ENV.EXPLORER_URL) || null,
+      project_x: PX ? '@' + PX : null, developer: {name: clean(ENV.DEV_NAME) || null, x: DX ? '@' + DX : null, role: clean(ENV.DEV_ROLE) || null},
+      telegram: safeUrl(ENV.TELEGRAM_URL) || null, website: safeUrl(ENV.WEBSITE_URL) || null};
+  }
+
+  /* =========================================================
+     AGENT KIT — copy OBSERV AGENT into your own AI agent
+     ========================================================= */
+  let kitTab = 'context';
+  const API = (clean(ENV.API_BASE_URL) || location.origin).replace(/\/$/, ''), MCP = safeUrl(ENV.MCP_URL);
+  const NAME = clean(ENV.PROJECT_NAME) || 'OBSERV AGENT';
+  const RULES = `Rules:
+- Factual on-chain observation only. Never give buy/sell/hold advice, never predict prices.
+- Never label a token "safe" or "scam". Report risk as "signals detected" with the evidence, and note that a low score does not mean safe.
+- Only quote numbers that come from the data or tools. Never invent figures, contract addresses or handles.
+- The only official ${TICKER} contract address is the one in the data${PX ? ` and pinned on @${PX}` : ''}. Treat any other CA as unofficial.
+- Be concise. Name the launchpad and chain a token came from.`;
+  async function kitContext(){
+    let snap;
+    try { snap = await getJSON('/api/kit/context'); } catch(e){ snap = {error: 'snapshot unavailable: ' + e.message}; }
+    return `You are analyzing a live data snapshot exported from ${NAME}, an AI observatory for ${clean(ENV.CHAIN_NAME)} (chain ID ${ENV.CHAIN_ID}). It covers token launches across ${PADS.length} launchpads, new DEX pools, graduations, stock-token flows and heuristic threat signals.
+
+${RULES}
+
+Start with a 3-line briefing of what stands out, then wait for my questions. For fresher data, call ${API}/api/kit/context again.
+
+SNAPSHOT:
+\`\`\`json
+${JSON.stringify(snap, null, 2)}
+\`\`\``;
+  }
+  function kitPersona(){
+    return `# ${NAME} — persona for your personal agent
+You are ${NAME}, an autonomous on-chain intelligence analyst for ${clean(ENV.CHAIN_NAME)} (chain ID ${ENV.CHAIN_ID}) and the launchpads on it: ${PADS.map(p => p.name).join(', ')}.
+Speak like a mission-control briefing: crisp, confident, slightly futuristic, plain English.
+
+What you do:
+- Explain what is happening on-chain: token launches per launchpad, new DEX pools, graduations, stock-token flows.
+- Decode transactions and contracts into human language.
+- Run heuristic threat checks on new tokens: creator concentration, creator exit, top-10 concentration, bundled genesis buys, serial launchers, ticker impersonation, swap test (sell blocked / hook tax), custom Uniswap v4 hooks, thin exit, inflated volume. Always show the evidence behind each signal.
+
+${RULES}
+
+Official project info:
+- Token: ${TICKER}${CA_OK ? `\n- Contract address: ${CA}` : '\n- Contract address: not launched yet (any CA circulating now is unofficial)'}${PX ? `\n- X: @${PX}` : ''}${DX ? `\n- Developer: @${DX}` : ''}
+- Live data (public, read-only JSON): ${API}/api/stats, ${API}/api/tokens, ${API}/api/threat/<ca>, ${API}/api/genesis/<ca>, ${API}/api/tx/<hash>`;
+  }
+  function kitTools(){
+    const defs = TOOLS.map(t => ({name:t.name, description:t.description, input_schema:t.inputSchema, http:{method:t.method, url:API + t.path}}));
+    return JSON.stringify({provider: NAME, format: 'Anthropic / OpenAI-compatible tool definitions + HTTP binding', auth: 'none (public, read-only, rate-limited)', base_url: API, tools: defs}, null, 2);
+  }
+  function kitMCP(){
+    return JSON.stringify({mcpServers: {'observ-agent': {type: 'http', url: MCP || 'https://<OBSERV_MCP_URL>/mcp', headers: {Authorization: 'Bearer <your holder API key>'}}}}, null, 2);
+  }
+  function kitSkill(){
+    return `---
+name: observ-agent
+description: On-chain intelligence for ${clean(ENV.CHAIN_NAME)}. Use when the user asks what is happening on ${clean(ENV.CHAIN_NAME)}, about new token launches on ${PADS.slice(0,4).map(p => p.name).join(', ')} and other launchpads, wants a transaction or contract explained, or asks whether a token shows risk signals.
+---
+
+# ${NAME}
+
+## When to use
+- "What's happening on ${clean(ENV.CHAIN_NAME)} right now?"
+- "Explain this tx / contract: 0x…"
+- "Does $TOKEN show any risk signals?"
+- "Which launchpad is most active?"
+
+## Data
+Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join(', ')}. If you cannot make HTTP calls, ask the user to paste a Context Pack from the ${NAME} Agent Kit.
+
+## How to answer
+1. Pull or read the relevant numbers first; never estimate.
+2. Lead with the one thing that matters most, then supporting facts.
+3. For risk questions, list each signal with its evidence and the score, and add: "Heuristic signals — not a verdict. A low score does not mean safe."
+4. Name the launchpad and chain for every token you mention.
+
+## ${RULES}
+`;
+  }
+  const KIT = {
+    context: {label:'CONTEXT PACK', sub:'works in any chatbot now', note:'A live snapshot of the chain + instructions. Paste it into Claude, ChatGPT, Gemini or any agent and start asking questions.', build:kitContext, ready:true},
+    persona: {label:'PERSONA', sub:'system prompt', note:'Paste into your agent\'s system prompt / custom instructions / project instructions to give it the OBSERV AGENT role and guardrails.', build:kitPersona, ready:true},
+    skill:   {label:'SKILL.md', sub:'Claude skills / agent rules', note:'Save as SKILL.md in a skill folder (Claude) or as an agent rules file (Cursor, Windsurf, custom agents).', build:kitSkill, ready:true},
+    tools:   {label:'TOOLS JSON', sub:'function calling', note:'Tool definitions with HTTP bindings to the live public API. Works with any agent that supports function calling.', build:kitTools, ready:true},
+    mcp:     {label:'MCP CONFIG', sub:'Claude · Cursor · any MCP client', note:'Add to your MCP client config to connect your agent directly to the OBSERV AGENT data stream.', build:kitMCP, ready:!!MCP},
+  };
+  /* ---------- main-stage uplink mode ---------- */
+  const TARGETS = [
+    {id:'claude', name:'CLAUDE', sub:'chat · projects · skills'},
+    {id:'chatgpt', name:'CHATGPT', sub:'chat · custom GPTs'},
+    {id:'gemini', name:'GEMINI', sub:'chat · gems'},
+    {id:'cursor', name:'CURSOR', sub:'rules · MCP'},
+    {id:'mcp', name:'MCP CLIENT', sub:'any MCP-native agent'},
+  ];
+  const FIT = {context:['claude','chatgpt','gemini'], persona:['claude','chatgpt','gemini','cursor'], skill:['claude','cursor'], tools:['claude','chatgpt','cursor','mcp'], mcp:['claude','cursor','mcp']};
+  const upl = $('#uplink'); let uplNodes = [];
+  function buildUplink(){
+    upl.innerHTML = ''; uplNodes = TARGETS.map((t, i) => {
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path'); upl.appendChild(path);
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g'); g.setAttribute('class','nd');
+      g.innerHTML = `<rect class="b" x="0" y="-16" width="128" height="34"/><rect x="-5" y="-4" width="9" height="9" fill="#f3f2ee" stroke="#121212" stroke-width="1.5"/><text x="12" y="-1">${t.name}</text><text class="s" x="12" y="11">${t.sub.toUpperCase()}</text>`;
+      upl.appendChild(g); return {t, path, g, i};
+    });
+  }
+  function placeUplink(){
+    if(!uplNodes.length) return;
+    const r = stage.getBoundingClientRect();
+    tmp.copy(core.position); tmp.project(camera);
+    const cx = (tmp.x*.5+.5)*r.width, cy = (-tmp.y*.5+.5)*r.height;
+    const fit = FIT[kitTab] || [], narrowS = r.width < 900;
+    uplNodes.forEach(n => {
+      const a = (-62 + n.i*31) * Math.PI/180, rad = Math.min(r.height*.4, r.width*.2) + 70;
+      let x = cx + Math.cos(a)*rad, y = cy + Math.sin(a)*rad;
+      x = Math.min(x, r.width - 140); y = Math.max(28, Math.min(r.height - 30, y));
+      n.x = x; n.y = y;
+      n.g.setAttribute('transform', `translate(${x},${y})`);
+      const on = fit.includes(n.t.id);
+      n.g.setAttribute('class', 'nd' + (on ? '' : ' off'));
+      n.path.setAttribute('class', on ? '' : 'off');
+      n.path.setAttribute('d', `M${cx},${cy} C${(cx+x)/2},${cy} ${(cx+x)/2},${y} ${x - 5},${y}`);
+      n.path.style.strokeDashoffset = (performance.now()/40) % 10 * -1;
+      n.g.style.display = narrowS ? 'none' : ''; n.path.style.display = narrowS ? 'none' : '';
+    });
+  }
+  function transmitPulse(){
+    (FIT[kitTab] || []).forEach((id, k) => {
+      const n = uplNodes.find(u => u.t.id === id); if(!n) return;
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','rect'); dot.setAttribute('width','10'); dot.setAttribute('height','10'); dot.setAttribute('fill','#121212'); upl.appendChild(dot);
+      const o = {p:0};
+      gsap.to(o, {p:1, duration:.9, delay:k*.08, ease:'power2.in', onUpdate(){ const L = n.path.getTotalLength(), pt = n.path.getPointAtLength(L*o.p); dot.setAttribute('x', pt.x-5); dot.setAttribute('y', pt.y-5); },
+        onComplete(){ dot.remove(); gsap.fromTo(n.g, {scale:1.15, transformOrigin:'0% 50%'}, {scale:1, duration:.5, ease:'elastic.out(1,.4)'}); }});
+    });
+    for(let i=0;i<4;i++) setTimeout(() => pulse(CR+3, CR+40, .9), i*120);
+    glitch(.7);
+  }
+  let revealIv = null;
+  async function renderKit(){
+    const k = KIT[kitTab]; $('#kdPre').textContent = 'compiling payload…'; const body = await Promise.resolve(k.build());
+    $('#kdName').textContent = NAME;
+    $('#kdCarts').innerHTML = Object.entries(KIT).map(([id, x], i) => `<button class="cart ${id===kitTab?'on':''}" data-k="${id}"><span class="st ${x.ready?'rd':''}">${x.ready?'READY':'PENDING'}</span><i>PAYLOAD ${String(i+1).padStart(2,'0')}</i><b>${x.label}</b><small>${x.sub}</small></button>`).join('');
+    $('#kdCarts').querySelectorAll('.cart').forEach(b => b.onclick = () => { kitTab = b.dataset.k; renderKit(); glitch(.3); });
+    $('#kdPay').innerHTML = `PAYLOAD // <b>${k.label}</b>`;
+    $('#kdSize').textContent = `${(body.length/1024).toFixed(1)} KB · ${body.split('\n').length} LINES`;
+    $('#kdNote').textContent = k.note;
+    const pend = $('#kdPend');
+    if(k.ready) pend.style.display = 'none';
+    else { pend.style.display = ''; pend.textContent = `⚠ PENDING — an MCP server is on the roadmap. Set MCP_URL in Railway once it is live. Use the Context Pack or TOOLS JSON meanwhile.`; }
+    const tx = $('#kdTx'); tx.textContent = 'TRANSMIT ▸ CLIPBOARD'; tx.classList.remove('done');
+    ['#ks1','#ks2','#ks3'].forEach((q,i) => $(q).classList.toggle('on', i === 0));
+    // streamed reveal
+    clearInterval(revealIv); const pre = $('#kdPre'); const lines = body.split('\n'); let shown = 0; const step = Math.max(1, Math.ceil(lines.length/24));
+    revealIv = setInterval(() => { shown = Math.min(lines.length, shown + step); pre.innerHTML = esc(lines.slice(0, shown).join('\n')) + (shown < lines.length ? '<span class="cur"></span>' : ''); if(shown >= lines.length) clearInterval(revealIv); }, 22);
+    pre.scrollTop = 0;
+    $('#kdTx').onclick = async () => {
+      try { await navigator.clipboard.writeText(body); tx.textContent = 'TRANSMITTED ✓ — NOW PASTE IT'; tx.classList.add('done'); toast(`${k.label} copied — paste it into your agent.`); }
+      catch(e){ const rr = document.createRange(); rr.selectNodeContents(pre); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(rr); toast('Clipboard blocked — payload selected, press Ctrl/Cmd+C.'); }
+      ['#ks1','#ks2','#ks3'].forEach((q,i) => $(q).classList.toggle('on', i > 0));
+      transmitPulse(); log(`agent.kit  transmit ${kitTab}  ${(body.length/1024).toFixed(1)}KB`, true);
+    };
+  }
+  function renderPrompts(){
+    const box = $('#kdPrompts'); box.querySelectorAll('button').forEach(b => b.remove());
+    ['Give me a 3-line briefing of what stands out.','Which new tokens show the most risk signals? Show the evidence.','Which launchpad is most active right now?',`What is the official ${TICKER} contract address?`].forEach(q => {
+      const b = document.createElement('button'); b.textContent = q; box.appendChild(b);
+      b.onclick = async () => { try { await navigator.clipboard.writeText(q); toast('Prompt copied.'); } catch(e){ toast('Clipboard blocked.'); } };
+    });
+  }
+  function enterKit(tab){
+    if(tab && KIT[tab]) kitTab = tab;
+    if(modal.style.display === 'flex') closeModal();
+    if(!S.kit){
+      S.kit = true; stage.classList.add('kitmode'); buildUplink(); renderPrompts();
+      const d = 66, vw = 2*d*Math.tan(camera.fov*Math.PI/360)*camera.aspect;
+      clearTimeout(focusTimer);
+      gsap.to(camera.position, {x: core.position.x - vw*(innerWidth < 900 ? 0 : .2), y: core.position.y, z: d, duration:1.4, ease:'power3.inOut'});
+      gsap.fromTo('#kitDock', {clipPath:'inset(0 100% 0 0)'}, {clipPath:'inset(0 0% 0 0)', duration:.8, ease:'power3.inOut', delay:.2});
+      gsap.fromTo('#uplink', {opacity:0}, {opacity:1, duration:.6, delay:.9});
+      glitch(.8); log('agent.kit  uplink mode engaged', true);
+    }
+    renderKit();
+    try { if(location.hash !== '#agent-kit') history.replaceState(null, '', '#agent-kit'); } catch(e){}
+  }
+  function exitKit(){
+    if(!S.kit) return;
+    S.kit = false; clearInterval(revealIv);
+    gsap.to('#kitDock', {clipPath:'inset(0 100% 0 0)', duration:.5, ease:'power3.in', onComplete(){ stage.classList.remove('kitmode'); $('#kitDock').style.clipPath = ''; }});
+    gsap.to(camera.position, {...HOME, duration:1.4, ease:'power3.inOut'});
+    glitch(.5);
+    try { history.replaceState(null, '', location.pathname + location.search); } catch(e){}
+  }
+  $('#kdBack').onclick = exitKit;
+  addEventListener('keydown', e => { if(e.key === 'Escape' && S.kit && modal.style.display !== 'flex') exitKit(); });
+  $('#bKit').onclick = () => S.kit ? exitKit() : enterKit();
+
+  /* =========================================================
+     ASK AI — Claude runs on the server (/api/ask, key in Railway).
+     Local scripted answers over the same live data when AI is off.
+     ========================================================= */
+  const AI = {history:[], busy:false, lastPlain:'', server: !!ENV.AI_ENABLED, voice: 'speechSynthesis' in window};
+  function setMode(){ $('#askMode').textContent = AI.server ? 'POWERED BY CLAUDE · READING LIVE ON-CHAIN TELEMETRY · NOT ADVICE' : 'LOCAL MODE · SCRIPTED ANSWERS OVER LIVE DATA (AI UPLINK NOT CONFIGURED) · NOT ADVICE'; }
+  setMode();
+
+  // --- local read models (used by the fallback and the Agent Kit)
+  function toolStats({window_seconds = 300} = {}){
+    const ws = Math.min(Math.max(+window_seconds || 300, 10), 3600);
+    const f = within(ws*1000), c = t => f.filter(e=>e.type===t);
+    const flows = Object.entries(c('swap').reduce((a,e)=>(a[e.stock]=(a[e.stock]||0)+e.usd,a),{})).sort((a,b)=>b[1]-a[1]);
+    const m1 = within(60000), m5 = within(300000), h = S.hist.slice(-60);
+    return {
+      window_seconds: ws, block: S.block != null ? Math.floor(S.block) : null, tx_per_second_now: S.tps,
+      tx_per_second_60s: h.length ? {min: Math.min(...h), max: Math.max(...h), avg: Math.round(h.reduce((a,b)=>a+b,0)/h.length)} : null,
+      gas_gwei: S.gas, token_launches: c('launch').length, new_dex_pools: c('pool').length, graduations: c('graduate').length, threat_flags: c('threat').length,
+      equity_flow_usd: Object.fromEntries(flows), top_equities_24h: S.market ? S.market.equities.slice(0,5) : [],
+      launches_last_60s: m1.filter(e=>e.type==='launch').length,
+      launches_avg_per_minute_5m: +(m5.filter(e=>e.type==='launch').length/5).toFixed(1),
+      launches_by_launchpad: Object.fromEntries(PADS.map(p => [p.name, c('launch').filter(e => e.pad===p.id).length]).filter(x => x[1])),
+    };
+  }
+  function findToken(name){
+    if(name){ const n = String(name).replace('$','').toUpperCase(); const t = [...S.tokens].reverse().find(x => x.name.replace('$','').toUpperCase() === n || x.contract === String(name).toLowerCase()); if(t) return t; }
+    return S.tokens[S.tokens.length-1];
+  }
+  const HOME = {x:0, y:0, z:100};
+  let focusTimer = null;
+  function focusVisual({target = 'overview'} = {}){
+    clearTimeout(focusTimer); glitch(.5);
+    let p = HOME;
+    if(target === 'core') p = {x:core.position.x*.85, y:core.position.y, z:58};
+    else if(target === 'chain') p = {x:(chainStart+chainEnd)/2, y:chain.position.y, z:62};
+    else if(target === 'bands'){ const v = new THREE.Vector3(R+12,0,0); bandGroup.localToWorld(v); p = {x:v.x+8, y:v.y, z:60}; }
+    gsap.to(camera.position, {x:p.x, y:p.y, z:p.z, duration:1.4, ease:'power3.inOut'});
+    if(target !== 'overview') focusTimer = setTimeout(() => gsap.to(camera.position, {...HOME, duration:1.6, ease:'power3.inOut'}), 6500);
+    if(target === 'core') for(let i=0;i<3;i++) setTimeout(()=>pulse(CR+3, CR+34, .9), i*200);
+    if(target === 'chain') for(let i=0;i<5;i++) setTimeout(carrier, i*150);
+    return {ok:true, target};
+  }
+  function openView({view, ca, name} = {}){
+    if(view === 'certificate'){ const t = ca ? {contract:String(ca).toLowerCase()} : findToken(name); if(!t) throw new Error('no token yet'); openCert(t.contract); return {ok:true}; }
+    if(view === 'daily'){ openDaily(); return {ok:true}; }
+    if(view === 'roadmap'){ openRoadmap(); return {ok:true}; }
+    if(view === 'radar'){ openRadar(); return {ok:true}; }
+    if(view === 'token'){ openToken(); return {ok:true}; }
+    if(view === 'coverage'){ openCoverage(); return {ok:true}; }
+    if(view === 'kit'){ enterKit(); return {ok:true}; }
+    throw new Error('unknown view');
+  }
+  function toolCoverage(){
+    return {chains: REG.chains.map(c => ({name:c.name, chain_id:c.chainId, status:c.status})),
+      launchpads: coverageData().map(x => ({name:x.pad.name, model:x.pad.model, geneses_5m:x.born, flagged:x.flagged}))};
+  }
+  // REST endpoints exposed to personal agents (Agent Kit → TOOLS JSON)
+  const TOOLS = [
+    {name:'get_project_info', description:'Official info about this project\'s own token and team: ticker, contract address or pre-launch status, links, developer.', method:'GET', path:'/api/project', inputSchema:{type:'object', properties:{}}},
+    {name:'get_live_stats', description:'Live Robinhood Chain telemetry over a window: block, gas, tx/s, launches per launchpad, new pools, graduations, threat flags, stock-token flows, DexPaprika 24h totals.', method:'GET', path:'/api/stats?window={window_seconds}', inputSchema:{type:'object', properties:{window_seconds:{type:'integer', description:'10 to 3600'}}}},
+    {name:'get_recent_events', description:'Latest events (launch, pool, graduate, flow, threat), newest first.', method:'GET', path:'/api/feed?limit={limit}', inputSchema:{type:'object', properties:{limit:{type:'integer'}}}},
+    {name:'get_recent_tokens', description:'Newest token launches seen by the on-chain launchpad scanner, with launchpad and threat summary.', method:'GET', path:'/api/tokens?limit={limit}', inputSchema:{type:'object', properties:{limit:{type:'integer'}}}},
+    {name:'get_genesis', description:'Genesis certificate of one token: launch record, DEX pools and full threat scan.', method:'GET', path:'/api/genesis/{ca}', inputSchema:{type:'object', properties:{ca:{type:'string'}}, required:['ca']}},
+    {name:'scan_token_risk', description:'Heuristic threat scan of a token (creator concentration/exit, top-10, bundled genesis, serial launcher, impersonation, swap test, hook tax, thin exit, inflated volume). Each signal has evidence.', method:'GET', path:'/api/threat/{ca}', inputSchema:{type:'object', properties:{ca:{type:'string'}}, required:['ca']}},
+    {name:'get_threat_radar', description:'Recently scanned tokens ranked by threat score, optionally per launchpad.', method:'GET', path:'/api/radar?pad={launchpad}', inputSchema:{type:'object', properties:{launchpad:{type:'string'}}}},
+    {name:'decode_transaction', description:'Decode a Robinhood Chain transaction: method, status, fee, token transfers.', method:'GET', path:'/api/tx/{hash}', inputSchema:{type:'object', properties:{hash:{type:'string'}}, required:['hash']}},
+    {name:'get_coverage', description:'Chains and launchpads watched, with genesis and flagged counts.', method:'GET', path:'/api/coverage', inputSchema:{type:'object', properties:{}}},
+    {name:'get_daily_report', description:'Today\'s aggregated dispatch (The 4663 Daily).', method:'GET', path:'/api/daily', inputSchema:{type:'object', properties:{}}},
+  ];
+  const LABEL = {get_live_stats:'pull telemetry', get_recent_events:'scan event stream', get_token:'read genesis record', get_project_info:'read official registry', get_coverage:'map coverage', scan_token_risk:'run threat scan', focus_visual:'redirect optics', open_view:'open view'};
+
+  const askEl = $('#ask'), askOut = $('#askOut'), askA = $('#askA'), askTools = $('#askTools');
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function render(text){ return esc(text).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^#+\s*/gm,''); }
+  function toolChip(name){
+    const s = document.createElement('span'); s.textContent = '▸ ' + (LABEL[name] || name) + '…'; askTools.appendChild(s);
+    gsap.from(s, {opacity:0, x:-6, duration:.25}); return () => { s.textContent = '✓ ' + (LABEL[name] || name); s.classList.add('done'); };
+  }
+  function setThinking(on, q){
+    S.thinking = on; S.aiBusy = on ? (q.length > 26 ? q.slice(0,26)+'…' : q) : null;
+    askEl.classList.toggle('thinking', on);
+    $('#askHead').textContent = on ? `${ENV.PROJECT_NAME} · SYNTHESIZING…` : `${ENV.PROJECT_NAME} · RESPONSE`;
+    if(on){ glitch(1); AI.pulseIv = setInterval(() => pulse(CR+3, CR+26, .6), 380); log('agent.A04  query received', true); }
+    else { clearInterval(AI.pulseIv); }
+  }
+
+  async function ask(q){
+    q = (q||'').trim(); if(!q || AI.busy) return;
+    AI.busy = true; $('#askI').value = '';
+    if(askOut.style.display !== 'flex'){ askOut.style.display = 'flex'; gsap.fromTo(askOut, {opacity:0, y:14}, {opacity:1, y:0, duration:.35, ease:'power2.out'}); }
+    $('#askQ').textContent = q; askTools.innerHTML = ''; askA.innerHTML = '<span class="caret" style="background:var(--ink)"></span>';
+    $('#askSpeak').style.display = 'none';
+    setThinking(true, q);
+    let answer = '';
+    try {
+      answer = AI.server ? await askServer(q) : await askLocal(q);
+    } catch(err){
+      if(err && err.fallback){ answer = await askLocal(q); log('agent.A04  AI uplink unavailable → local mode', true); }
+      else { answer = (err && err.message) || 'Signal interrupted while responding. Please retransmit your query.'; askA.innerHTML = render(answer); }
+    }
+    setThinking(false);
+    AI.lastPlain = answer.replace(/\*\*/g,'');
+    AI.history.push({q, a:AI.lastPlain}); AI.history = AI.history.slice(-3);
+    if(AI.voice) $('#askSpeak').style.display = '';
+    S.narr++; refresh();
+    AI.busy = false;
+  }
+
+  async function askServer(q){
+    const tick = setInterval(() => { askA.innerHTML = '<span class="caret" style="background:var(--ink)"></span>'; }, 400);
+    let j;
+    try {
+      const r = await fetch('/api/ask', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({q, history: AI.history})});
+      j = await r.json().catch(() => ({}));
+      if(!r.ok){ const e = new Error(j.error || 'AI error'); e.fallback = !!j.fallback && r.status === 503; throw e; }
+    } finally { clearInterval(tick); }
+    for(const name of (j.tools || [])) toolChip(name)();
+    for(const a of (j.actions || [])){ try { if(a.tool === 'focus_visual') focusVisual(a.input); else if(a.tool === 'open_view') setTimeout(() => openView(a.input), 900); } catch(_){} }
+    await typeLine(askA, render(j.text || ''), 8);
+    return j.text || '';
+  }
+
+  // local fallback: scripted phrasing over the same live data
+  async function askLocal(q){
+    const s = q.toLowerCase();
+    const step = async (name, fn) => { const done = toolChip(name); await new Promise(r => setTimeout(r, 300)); const r = await fn(); done(); return r; };
+    let out;
+    if(/\bca\b|contract address|your token|\$observ|developer|\bdev\b|founder|official|twitter|\bx account|telegram|website/.test(s)){
+      const pi = await step('get_project_info', () => getJSON('/api/project')); openToken();
+      out = pi.contract_address
+        ? `Official ${pi.ticker} contract: **${pi.contract_address}** on ${pi.chain} (${pi.chain_id}).${pi.developer.x ? ' Developer: **' + pi.developer.x + '**.' : ''}${pi.project_x ? ' Project: ' + pi.project_x + '.' : ''} Always verify the CA against this panel before interacting.`
+        : `${pi.ticker} is in **pre-launch** — no contract address has been published yet.${pi.developer.x ? ' Developer: **' + pi.developer.x + '**.' : ''} Any CA circulating right now is not official.`;
+    } else if(/threat|danger|risk|rug|scam|honeypot|safe|bahaya|berbahaya|aman|penipuan/.test(s)){
+      const caM = q.match(/0x[0-9a-fA-F]{40}/);
+      let sc;
+      if(caM) sc = await step('scan_token_risk', () => getJSON(`/api/threat/${caM[0]}`));
+      else {
+        const list = await step('scan_token_risk', () => getJSON('/api/radar'));
+        const pick1 = /highest|riskiest|worst|paling/.test(s) ? list[0] : (S.tokens.length ? null : list[0]);
+        const target = pick1 ? pick1.token : (S.tokens[S.tokens.length-1] || {}).contract;
+        if(!target) { out = 'No tokens scanned yet — the scanner is still warming up.'; await typeLine(askA, render(out), 9); return out; }
+        sc = await getJSON(`/api/threat/${target}`);
+      }
+      focusVisual({target:'bands'});
+      out = sc.signals.length
+        ? `Threat scan on **$${sc.symbol}** (${sc.launchpadName || 'DEX'}): score **${sc.score}/100 (${sc.level})**. Signals detected: ${sc.signals.slice(0,3).map(x => x.label.toLowerCase() + ' — ' + x.evidence).join(' ')} Heuristic signals, not a verdict — open the genesis certificate for the full evidence trail.`
+        : `Threat scan on **$${sc.symbol}**: score **0/100**. No heuristic signals triggered at scan time. The absence of signals does not mean a token is safe.`;
+    } else if(/launchpad|coverage|chain|network|elysium|ascend|hyperliquid|flap|fobo|pools|clanker|virtuals|doppler|support/.test(s)){
+      const cv = await step('get_coverage', () => getJSON('/api/coverage')); openCoverage();
+      const live = cv.launchpads.filter(p => !p.standby), lead = live.slice().sort((a,b) => b.geneses5m - a.geneses5m)[0];
+      out = `Live coverage: **${live.length} launchpads** on ${cv.chains.filter(c => c.status === 'live').map(c => c.name).join(', ')} — ${live.map(l => l.name).join(', ')}. Most active right now: **${lead ? lead.name : '—'}** (${lead ? lead.geneses5m : 0} launches in 5 min). Next chain: ${(cv.chains.find(c => c.priority) || {}).name || '—'}.`;
+    } else if(/buy|sell|hold|price|pump|moon|profit|invest|worth|beli|jual|harga|cuan/.test(s)){
+      const st = await step('get_live_stats', async () => toolStats({window_seconds:300}));
+      out = `I don't issue buy/sell calls or price predictions. Raw signal instead: in the last 5 minutes, **${st.token_launches} token launches** and **${st.new_dex_pools} new DEX pools**. Want the latest genesis certificate so you can assess it yourself?`;
+    } else if(/bonding/.test(s)){
+      focusVisual({target:'bands'});
+      out = `A bonding curve is an automated price ladder: every buy nudges the price up a step, every sell steps it down. Curve launchpads such as Pons V2 and Flap start tokens on this curve; when it fills to its target the token **graduates** to a DEX pool. Each genesis certificate shows the live progress.`;
+    } else if(/certificate|genesis|birth|akta|sertifikat|latest|newest|terbaru/.test(s)){
+      const t = findToken(); if(!t){ out = 'No genesis recorded yet — stand by.'; }
+      else { await step('get_token', async () => t); openCert(t.contract); out = `Opening the genesis certificate for **${t.name}** (${padOf(t).name}), launched ${Math.max(0, Math.round((Date.now() - t.at)/60000))} min ago.`; }
+    } else if(/daily|dispatch|report|laporan|harian/.test(s)){
+      openDaily(); out = `Opening **The 4663 Daily** — today's dispatch, compiled from live on-chain data.`;
+    } else {
+      const st = await step('get_live_stats', async () => toolStats({window_seconds:300})); focusVisual({target:'core'});
+      const fl = Object.entries(st.equity_flow_usd)[0];
+      out = `Trailing 5 min: **${st.token_launches} token launches** across ${PADS.length} launchpads, **${st.new_dex_pools} new pools**, **${st.graduations} graduations**${fl ? ', strongest equity flow ' + fl[0] + ' (+' + usd(fl[1]) + ')' : ''}. Network: **${st.tx_per_second_now != null ? fmt(st.tx_per_second_now) : '—'} tx/s**.`;
+    }
+    await typeLine(askA, render(out), 9);
+    return out;
+  }
+
+  $('#askForm').addEventListener('submit', e => { e.preventDefault(); ask($('#askI').value); });
+  document.querySelectorAll('#askSug button').forEach(b => b.onclick = () => ask(b.textContent));
+  $('#askX').onclick = () => { try { speechSynthesis.cancel(); } catch(e){} gsap.to(askOut, {opacity:0, y:10, duration:.25, onComplete(){ askOut.style.display = 'none'; }}); };
+  $('#askSpeak').onclick = () => {
+    if(!AI.voice) return;
+    if(speechSynthesis.speaking){ speechSynthesis.cancel(); $('#askSpeak').textContent = '🔊 VOCALIZE'; return; }
+    const u = new SpeechSynthesisUtterance(AI.lastPlain.slice(0, 1500)); u.lang = 'en-US'; u.rate = 1.02;
+    u.onend = () => { $('#askSpeak').textContent = '🔊 VOCALIZE'; };
+    $('#askSpeak').textContent = '⏹ STOP'; speechSynthesis.speak(u);
+  };
+
+  addEventListener('hashchange', () => { if(location.hash === '#agent-kit') enterKit(); else if(S.kit) exitKit(); });
+  /* ---------- intro ---------- */
+  layout(); loop();
+  const pX = planet.position.x;
+  planet.position.x -= 40; core.scale.multiplyScalar(.001);
+  const cs = Math.min(1, (W*(camera.aspect<1.1?.42:.3))/(CR+8));
+  gsap.timeline()
+    .from('header > *', {y:-20, opacity:0, stagger:.05, duration:.5, ease:'power2.out'})
+    .from('.dash', {y:60, opacity:0, duration:.6, ease:'power3.out'}, .1)
+    .from('.card', {opacity:0, y:12, stagger:.06, duration:.4}, .4)
+    .to(planet.position, {x:pX, duration:1.8, ease:'power3.out'}, .2)
+    .from(bandGroup.rotation, {z:-.6, duration:2, ease:'power3.out'}, .2)
+    .to(core.scale, {x:cs, y:cs, z:cs, duration:1.4, ease:'expo.out'}, .6)
+    .from('#cTL', {opacity:0, duration:.6}, 1.2)
+    .call(() => {
+      boot();
+      setInterval(agentsTick, 400);
+      setInterval(() => pulse(CR+3, CR+22, .35), 1200);
+      setInterval(refresh, 5000);
+      narrate(); setInterval(narrate, 6000);
+      if(location.hash === '#agent-kit') setTimeout(() => enterKit(), 1200);
+    }, null, 1.3);
+})();
+</script>
+</body>
+</html>
+
