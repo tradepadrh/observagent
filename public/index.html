@@ -1895,11 +1895,11 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
   $('#bKit').onclick = () => S.kit ? exitKit() : enterKit();
 
   /* =========================================================
-     ASK AI — Claude runs on the server (/api/ask, key in Railway).
+     ASK AI — the agent core runs on the server (/api/ask).
      Local scripted answers over the same live data when AI is off.
      ========================================================= */
   const AI = {history:[], busy:false, lastPlain:'', server: !!ENV.AI_ENABLED, voice: 'speechSynthesis' in window};
-  function setMode(){ $('#askMode').textContent = AI.server ? 'POWERED BY CLAUDE · READING LIVE ON-CHAIN TELEMETRY · NOT ADVICE' : 'LOCAL MODE · SCRIPTED ANSWERS OVER LIVE DATA (AI UPLINK NOT CONFIGURED) · NOT ADVICE'; }
+  function setMode(){ $('#askMode').textContent = AI.server ? 'OBSERV AGENT CORE · READING LIVE ON-CHAIN TELEMETRY · NOT ADVICE' : 'LOCAL MODE · SCRIPTED ANSWERS OVER LIVE DATA (AI UPLINK NOT CONFIGURED) · NOT ADVICE'; }
   setMode();
 
   // --- local read models (used by the fallback and the Agent Kit)
@@ -1991,7 +1991,7 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
     try {
       answer = AI.server ? await askServer(q) : await askLocal(q);
     } catch(err){
-      if(err && err.fallback){ answer = await askLocal(q); log('agent.A04  AI uplink unavailable → local mode', true); }
+      if(err && err.fallback){ answer = await askLocal(q); log('agent.A04  core busy → local telemetry mode', true); }
       else { answer = (err && err.message) || 'Signal interrupted while responding. Please retransmit your query.'; askA.innerHTML = render(answer); }
     }
     setThinking(false);
@@ -2008,7 +2008,7 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
     try {
       const r = await fetch('/api/ask', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({q, history: AI.history})});
       j = await r.json().catch(() => ({}));
-      if(!r.ok){ const e = new Error(j.error || 'AI error'); e.fallback = !!j.fallback && r.status === 503; throw e; }
+      if(!r.ok){ const e = new Error(j.error || 'AI error'); e.fallback = !!j.fallback; throw e; }
     } finally { clearInterval(tick); }
     for(const name of (j.tools || [])) toolChip(name)();
     for(const a of (j.actions || [])){ try { if(a.tool === 'focus_visual') focusVisual(a.input); else if(a.tool === 'open_view') setTimeout(() => openView(a.input), 900); } catch(_){} }

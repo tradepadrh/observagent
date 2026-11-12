@@ -19,7 +19,7 @@ Railway (1 service)
     │                      hood.fun, LaunchHood, Virtuals, Klik, Doppler, Ape.store, Bags, Clanker, pools.trade, trench
     ├── lib/threat.js      threat scanner: holder, wallet pembuat, bundled buys, impersonation, swap test
     ├── lib/swaptest.js    simulasi beli → jual lewat quoter Uniswap V2/V3/V4 (read-only)
-    ├── lib/ai.js          Claude (Anthropic API) + tools di atas data live
+    ├── lib/ai.js          AI agent core (provider bebas: Groq / Gemini / OpenRouter / OpenAI / Anthropic) + tools
     ├── lib/registry.js    daftar chain (Elysium, Base, …) dan info tiap launchpad
     └── public/index.html  UI Ink Edition (Three.js + GSAP + shader GLSL)
 ```
@@ -50,8 +50,10 @@ bash push.sh "OBSERV v1" main       # push ke branch main (production)
 | `TOKEN_CA` | Alamat kontrak token kalian. Kalau kosong, strip CA menampilkan **PRE-LAUNCH**. Saat launch cukup isi ini, tanpa rebuild. |
 | `TOKEN_TICKER`, `PROJECT_NAME`, `LAUNCHPAD_NAME`, `LAUNCHPAD_URL` | Identitas token. |
 | `PROJECT_X`, `DEV_NAME`, `DEV_X`, `DEV_ROLE`, `DEV_BIO`, `TELEGRAM_URL`, `WEBSITE_URL` | Panel **TOKEN · DEV**. |
-| `ANTHROPIC_API_KEY` | Mengaktifkan AI agent. Kalau kosong, UI menjawab dengan skrip lokal di atas data live. |
-| `ANTHROPIC_MODEL` | Default `claude-sonnet-5-5`. Pakai `claude-haiku-5-5` untuk biaya lebih murah. |
+| `AI_API_KEY` | Mengaktifkan AI agent. Provider dideteksi dari awalan key: `gsk_…` Groq (gratis), `AIza…` Gemini (gratis), `sk-or-…` OpenRouter, `sk-ant-…` Anthropic. Kosong = skrip lokal di atas data live. |
+| `AI_MODEL` | Opsional. Default Groq `openai/gpt-oss-120b`, Gemini `gemini-flash-latest`. |
+| `AI_PROVIDER` / `AI_BASE_URL` | Opsional, untuk provider lain yang kompatibel OpenAI. |
+| `AI_DEBUG_ERRORS` | `1` = tampilkan alasan error di web (untuk debug). Default: pengunjung otomatis dapat jawaban mode lokal, alasan hanya di log Railway (`agent-core:`). |
 | `AI_PER_IP_PER_MINUTE`, `AI_DAILY_LIMIT` | Batas biaya AI (default 6/menit per IP, 800/hari). |
 | `RPC_URL` | **Sangat disarankan pakai RPC privat** (Alchemy/Chainstack/QuickNode), karena scanner banyak memakai `eth_getLogs`. |
 | `DEXPAPRIKA_API_KEY` | Opsional. Free key menaikkan limit. |
@@ -78,7 +80,7 @@ Daftar lengkap dengan default ada di `.env.example`.
 | `GET /api/radar?pad=pons` | Token yang sudah di-scan, diurutkan dari skor tertinggi |
 | `GET /api/tx/{hash}` | Decode transaksi: method, status, fee, transfer token |
 | `GET /api/coverage`, `/api/daily`, `/api/project`, `/api/kit/context` | Coverage, The 4663 Daily, info token resmi, Context Pack |
-| `POST /api/ask` `{q, history}` | AI agent (kalau `ANTHROPIC_API_KEY` diisi) |
+| `POST /api/ask` `{q, history}` | AI agent (kalau `AI_API_KEY` diisi) |
 
 Endpoint berat (genesis, threat, tx, swaptest) dibatasi `HEAVY_PER_IP_PER_MINUTE` per IP.
 
