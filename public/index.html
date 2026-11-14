@@ -457,18 +457,9 @@
   .hnav{display:contents}
   .hmenu{display:none}
 
-  /* ---------- PHONE LAYOUT: scrolling page, stage on top, dashboard below ---------- */
-  @media (max-width:640px){
-    :root{--head:48px;--cabar:44px}
+  /* ---------- header menu for tablets + phones ---------- */
+  @media (max-width:1180px){
     header.open{z-index:31}
-    header .hc label{white-space:nowrap;font-size:8px;letter-spacing:.12em}
-    header .hc b{font-size:12px}
-    html,body{height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto;-webkit-text-size-adjust:100%}
-    header .hc{display:none}
-    header .hc.blkc,header .hc.warnc{display:flex;min-width:0;padding:0 10px}
-    header .logo{padding:0 12px}
-    header .logo span{display:inline;font-size:13px}
-    .hstat{display:none}
     .hmenu{display:block;margin-left:auto;padding:0 16px;font-size:11px}
     .hmenu::before{content:"≡ ";font-size:14px}
     header.open .hmenu{background:var(--ink);color:var(--paper2)}
@@ -477,6 +468,23 @@
     header.open .hnav{display:flex}
     .hnav .hbtn{border-left:0;border-top:1px solid rgba(0,0,0,.2);text-align:left;padding:16px 18px;font-size:12px;letter-spacing:.16em}
     .hnav .hbtn::after{content:"→";float:right}
+    .hnav{left:auto;width:min(360px,100%);border-left:2px solid var(--ink)}
+    .hstat{display:none}
+    .corner{display:none!important}
+  }
+  @media (max-width:640px){ .hnav{left:0;width:auto;border-left:0} }
+  /* ---------- PHONE LAYOUT: scrolling page, stage on top, dashboard below ---------- */
+  @media (max-width:640px){
+    :root{--head:48px;--cabar:44px}
+    header .hc label{white-space:nowrap;font-size:8px;letter-spacing:.12em}
+    header .hc b{font-size:12px}
+    html{height:auto;overflow-x:hidden;overflow-y:auto;-webkit-text-size-adjust:100%}
+    body{height:auto;min-height:100%;overflow:visible;overflow-x:clip}
+    header .hc{display:none}
+    header .hc.blkc,header .hc.warnc{display:flex;min-width:0;padding:0 10px}
+    header .logo{padding:0 12px}
+    header .logo span{display:inline;font-size:13px}
+    .hstat{display:none}
     #stage{position:relative;top:auto;bottom:auto;margin-top:calc(var(--head) + var(--cabar) + 22px);height:max(420px,64svh)}
     .corner,#xhair{display:none!important}
     .tag{max-width:64vw;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:9px}
@@ -508,6 +516,126 @@
   }
   @media (max-width:480px){ header .logo span{display:none} header .hc.warnc{flex:1} .ask-in button{padding:0 12px;font-size:10px;letter-spacing:.08em} .ask-in .spark{padding:0 8px} }
   @media (max-width:360px){ .card .n{font-size:26px} }
+
+  /* ---------- FIELD NOTES: wisdom for the humans in crypto ---------- */
+  .wis{position:absolute;z-index:6;left:14px;bottom:18px;width:min(310px,calc((100% - 660px)/2 - 28px));min-width:250px;background:var(--paper2);border:1.5px solid var(--ink);box-shadow:5px 5px 0 var(--ink)}
+  .wis .wh{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--ink);color:var(--paper2);padding:6px 10px;font-size:9px;letter-spacing:.16em}
+  .wis .wh b{font-weight:700}
+  .wis .wbar{width:46px;height:3px;background:rgba(255,255,255,.25);position:relative;flex:none}
+  .wis .wbar i{position:absolute;inset:0 auto 0 0;width:0;background:var(--paper2)}
+  .wis p{font-family:var(--narrow);font-weight:700;font-size:19px;line-height:1.22;letter-spacing:.01em;padding:12px 12px 10px;min-height:86px;color:var(--ink)}
+  .wis p::before{content:"“";font-size:30px;line-height:0;vertical-align:-10px;margin-right:2px}
+  .wis p .cur{display:inline-block;width:.5em;height:.95em;background:var(--ink);vertical-align:-2px;margin-left:2px;animation:blink 1s steps(1) infinite}
+  .wis .wf{display:flex;align-items:center;gap:6px;border-top:1px dashed rgba(0,0,0,.35);padding:7px 10px;font-size:8.5px;letter-spacing:.12em;color:var(--ink2)}
+  .wis .wf span{margin-left:auto;white-space:nowrap}
+  .wis .wf button{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.12em;background:none;border:1px solid var(--ink);color:var(--ink);padding:4px 7px;cursor:pointer}
+  .wis .wf button:hover{background:var(--ink);color:var(--paper2)}
+  @keyframes blink{50%{opacity:0}}
+  @media (max-width:1180px) and (min-width:641px){ .log{display:none} .wis{bottom:auto;top:12px;width:270px;min-width:0} .wis p{font-size:16px;min-height:0;padding:9px 10px 8px} .wis .wf span{display:none} }
+  @media (max-width:640px){
+    .wis{display:block!important;left:10px;right:10px;top:10px;bottom:auto;width:auto;min-width:0;box-shadow:4px 4px 0 var(--ink)}
+    .wis p{font-size:17px;min-height:0;padding:10px 10px 8px}
+    .wis .wf span{display:none}
+  }
+  #stage.kitmode .wis{display:none!important}
+
+  /* =========================== FIELD MANUAL (landing below the observatory) =========================== */
+  html{overflow-x:hidden;overflow-y:auto;height:auto}
+  body{overflow:visible;overflow-x:clip;height:auto;min-height:100%}
+  #lfSocial{display:contents}
+  @media (max-width:1560px){ .hstat{display:none} }
+  @media (min-width:641px){
+    #stage{position:absolute;bottom:auto;height:calc(100vh - var(--head) - var(--cabar) - 22px - var(--dash))}
+    .dash{position:absolute;top:calc(100vh - var(--dash));bottom:auto}
+    .corner{position:absolute}
+    #land{margin-top:100vh}
+  }
+  #land{position:relative;z-index:8;background:var(--paper);border-top:2px solid var(--ink)}
+  .lmarq{overflow:hidden;background:var(--ink);color:var(--paper2);white-space:nowrap;font-family:var(--narrow);font-weight:700;font-size:20px;letter-spacing:.2em;padding:10px 0}
+  .lmarq-in{display:inline-block;animation:lmarq 38s linear infinite}
+  @keyframes lmarq{to{transform:translateX(-50%)}}
+  .ls{max-width:1240px;margin:0 auto;padding:88px 28px 40px}
+  .lhead{display:grid;grid-template-columns:auto 1fr;column-gap:22px;align-items:end;border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:28px}
+  .lnum{font-size:11px;letter-spacing:.2em;border:1.5px solid var(--ink);padding:5px 8px;align-self:start;margin-top:10px}
+  .lhead h2,.lbegin h2{font-family:var(--narrow);font-weight:700;font-size:clamp(34px,5.4vw,72px);line-height:.95;letter-spacing:-.01em;text-transform:uppercase}
+  .lhead h2 em,.lbegin h2 em{font-style:italic;font-weight:500;text-transform:lowercase;letter-spacing:0}
+  .lhead p{grid-column:2;margin-top:12px;font-size:12.5px;line-height:1.6;color:var(--ink2);max-width:640px}
+  .steps4{display:grid;grid-template-columns:repeat(4,1fr);border:1.5px solid var(--ink);background:var(--paper2)}
+  .st{padding:18px;border-right:1px solid rgba(0,0,0,.3);display:flex;flex-direction:column;gap:10px}
+  .st:last-child{border-right:0}
+  .stn{font-size:10px;letter-spacing:.2em;background:var(--ink);color:var(--paper2);align-self:flex-start;padding:4px 7px}
+  .st h3,.cap h3{font-family:var(--narrow);font-weight:700;font-size:22px;letter-spacing:.02em;text-transform:uppercase}
+  .st p,.cap p{font-size:12px;line-height:1.6;color:var(--ink2)}
+  .term{margin-top:auto;background:#121212;color:#e9e7e1;font-family:var(--mono);font-size:10.5px;line-height:1.65;padding:12px;white-space:pre;overflow:hidden}
+  .term i{font-style:normal;color:#8f8d86} .term .ok{color:#cfeec4} .term .warn{color:#f3e7b0} .term .dim{color:#77756f}
+  .caps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .cap{background:var(--paper2);border:1.5px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:18px;display:flex;flex-direction:column;gap:10px;transition:transform .2s,box-shadow .2s}
+  .cap:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--ink)}
+  .capk{font-size:10px;letter-spacing:.2em;color:var(--dim,#77756f)}
+  .capv{border:1px dashed rgba(0,0,0,.4);padding:9px;font-size:10.5px;display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+  .capv span{background:var(--ink);color:var(--paper2);padding:2px 6px;letter-spacing:.1em}
+  .capv.bars{flex-direction:column;gap:5px} .capv.bars i{display:block;height:7px;background:repeating-linear-gradient(-45deg,#121212 0 4px,#3a3a3a 4px 8px)}
+  .capv.mono{letter-spacing:.06em;color:var(--ink2)}
+  .cap button,.lcta button,.lcopy{font-family:var(--mono);font-weight:700;font-size:10.5px;letter-spacing:.14em;border:1.5px solid var(--ink);background:var(--paper2);color:var(--ink);padding:10px 12px;cursor:pointer;text-align:left}
+  .cap button:hover,.lcta button:hover,.lcopy:hover{background:var(--ink);color:var(--paper2)}
+  .rp-wrap{height:260vh;position:relative}
+  .rp-stick{position:sticky;top:calc(var(--head) + var(--cabar) + 40px);display:grid;grid-template-columns:1fr 180px;gap:22px;align-items:start}
+  .rp-win{border:1.5px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:#121212}
+  .rp-bar{display:flex;justify-content:space-between;background:var(--paper2);color:var(--ink);border-bottom:1.5px solid var(--ink);padding:8px 12px;font-size:10.5px;letter-spacing:.1em}
+  .rp-body{height:min(54vh,460px);overflow:hidden;margin:0;padding:16px;color:#e9e7e1;font-family:var(--mono);font-size:12px;line-height:1.7;white-space:pre-wrap;display:flex;flex-direction:column;justify-content:flex-end}
+  .rp-body .u{color:#fff;font-weight:700} .rp-body .t{color:#8f8d86} .rp-body .ok{color:#cfeec4} .rp-body .w{color:#f3e7b0} .rp-body .a{color:#e9e7e1;border-left:2px solid #e9e7e1;padding-left:10px;display:block;margin:4px 0}
+  .rp-body .cur{display:inline-block;width:8px;height:14px;background:#e9e7e1;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+  .rp-prog{height:4px;background:#2a2a2a} .rp-prog i{display:block;height:100%;width:0;background:#e9e7e1}
+  .rp-phase{list-style:none;display:flex;flex-direction:column;gap:8px;counter-reset:ph}
+  .rp-phase li{counter-increment:ph;border:1.5px solid var(--ink);padding:12px;font-size:11px;letter-spacing:.18em;background:var(--paper2);color:var(--ink2)}
+  .rp-phase li::before{content:"0" counter(ph) " ";font-weight:700}
+  .rp-phase li.on{background:var(--ink);color:var(--paper2)}
+  .lstats{display:grid;grid-template-columns:repeat(5,1fr);border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);background:var(--paper2);margin-top:40px}
+  .lstats div{padding:26px 22px;border-right:1px solid rgba(0,0,0,.3)} .lstats div:last-child{border-right:0}
+  .lstats b{display:block;font-family:var(--narrow);font-weight:700;font-size:clamp(38px,4.6vw,64px);line-height:1}
+  .lstats span{display:block;margin-top:8px;font-size:9.5px;letter-spacing:.18em;color:var(--ink2)} .lstats em{font-style:normal}
+  .faq{border-top:1.5px solid var(--ink)}
+  .faq details{border-bottom:1.5px solid var(--ink)}
+  .faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:16px;padding:20px 4px;font-family:var(--narrow);font-weight:700;font-size:clamp(18px,2.2vw,26px);text-transform:uppercase;letter-spacing:.02em}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{content:"+";font-family:var(--mono);font-size:22px;line-height:1}
+  .faq details[open] summary::after{content:"−"}
+  .faq p{padding:0 4px 22px;font-size:13px;line-height:1.7;color:var(--ink2);max-width:820px}
+  .tkgrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px;align-items:start}
+  .tkcard{border:1.5px solid var(--ink);background:var(--paper2);box-shadow:8px 8px 0 var(--ink)}
+  .tkcard dl{display:grid;grid-template-columns:140px 1fr}
+  .tkcard dt{background:var(--ink);color:var(--paper2);font-size:10px;letter-spacing:.18em;padding:14px 12px;border-bottom:1px solid #3a3a3a}
+  .tkcard dd{padding:12px 14px;border-bottom:1px solid rgba(0,0,0,.25);font-size:13px;display:flex;align-items:center;gap:10px;min-width:0}
+  .tkcard dd.lca span{font-size:12px;word-break:break-all}
+  .lcopy{padding:6px 10px;margin-left:auto;flex:none}
+  .tklinks{display:flex;flex-wrap:wrap;gap:8px;padding:14px}
+  .tklinks a{font-size:10.5px;font-weight:700;letter-spacing:.14em;border:1.5px solid var(--ink);padding:8px 10px;text-decoration:none;color:var(--ink)}
+  .tklinks a:hover{background:var(--ink);color:var(--paper2)}
+  .tkdisc{font-size:11.5px;line-height:1.7;color:var(--ink2);border-left:3px solid var(--ink);padding:4px 0 4px 14px}
+  .lbegin{text-align:center;padding-top:110px;padding-bottom:110px;display:flex;flex-direction:column;align-items:center;gap:18px}
+  .lbegin p{font-size:13px;color:var(--ink2)}
+  .lcta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .lcta button{padding:14px 18px;text-align:center} .lcta button.alt{background:var(--ink);color:var(--paper2)} .lcta button.alt:hover{background:#000}
+  .lfoot{background:var(--ink);color:var(--paper2);padding:34px 28px;display:grid;grid-template-columns:1fr auto;gap:18px 28px;font-size:11px}
+  .lfoot a{color:var(--paper2);text-decoration:none;letter-spacing:.1em} .lfoot a:hover{text-decoration:underline}
+  .lf-brand b{display:block;font-family:var(--narrow);font-size:22px;letter-spacing:.14em} .lf-brand span{color:#a9a7a0}
+  .lfoot nav{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:flex-end}
+  .lf-legal{grid-column:1/-1;border-top:1px solid #3a3a3a;padding-top:14px;color:#a9a7a0;letter-spacing:.06em}
+  .lf-legal a{text-decoration:underline}
+  .rv{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease} .rv.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){ .rv{opacity:1;transform:none} .lmarq-in{animation:none} }
+  @media (max-width:1000px){ .steps4{grid-template-columns:1fr 1fr} .st:nth-child(2){border-right:0} .st:nth-child(-n+2){border-bottom:1px solid rgba(0,0,0,.3)} .caps{grid-template-columns:1fr 1fr} .lstats{grid-template-columns:repeat(3,1fr)} .lstats div:nth-child(3){border-right:0} .lstats div:nth-child(-n+3){border-bottom:1px solid rgba(0,0,0,.3)} .tkgrid{grid-template-columns:1fr} }
+  @media (max-width:640px){
+    .ls{padding:56px 16px 28px}
+    .lhead{grid-template-columns:1fr} .lhead p{grid-column:1} .lnum{justify-self:start;margin:0 0 10px}
+    .steps4{grid-template-columns:1fr} .st{border-right:0!important;border-bottom:1px solid rgba(0,0,0,.3)}
+    .caps{grid-template-columns:1fr}
+    .rp-wrap{height:220vh} .rp-stick{grid-template-columns:1fr;top:calc(var(--head) + var(--cabar) + 30px)} .rp-phase{flex-direction:row;flex-wrap:wrap;gap:6px} .rp-phase li{padding:7px 8px;font-size:9px;flex:1}
+    .rp-body{height:52svh;font-size:11px;padding:12px}
+    .lstats{grid-template-columns:1fr 1fr} .lstats div{border-right:1px solid rgba(0,0,0,.3)!important;border-bottom:1px solid rgba(0,0,0,.3)} .lstats div:nth-child(2n){border-right:0!important} .lstats div:last-child{grid-column:1/-1}
+    .tkcard dl{grid-template-columns:104px 1fr}
+    .lfoot{grid-template-columns:1fr} .lfoot nav{justify-content:flex-start}
+  }
 </style>
 </head>
 <body>
@@ -584,6 +712,11 @@
       <button>Scan the latest genesis for threats</button>
     </div>
   </div>
+  <aside class="wis" id="wis" aria-live="polite">
+    <div class="wh"><span>FIELD NOTE <b id="wisN">01</b>/<b id="wisT">24</b> · FOR HUMANS</span><span class="wbar"><i id="wisBar"></i></span></div>
+    <p id="wisTx"></p>
+    <div class="wf"><button id="wisNext" title="Next note">NEXT ↻</button><button id="wisShare" title="Share on X">SHARE ↗</button><span>NOT ADVICE · JUST HUMAN</span></div>
+  </aside>
   <div class="agents" id="agents">
     <div class="ah"><span>AGENT SHIFT · 5/5 ONLINE</span><span id="shift">00:00</span></div>
   </div>
@@ -628,6 +761,113 @@
   <div id="mBody"></div>
 </div></div>
 
+<main id="land" aria-label="OBSERV field manual">
+  <div class="lmarq" aria-hidden="true"><div class="lmarq-in" id="lmarq"></div></div>
+
+  <section class="ls" id="how">
+    <div class="lhead"><span class="lnum">01</span><h2>How the observatory <em>works</em></h2><p>Four passes over every block. No wallet, no keys, no trades — it only watches, reads and reports.</p></div>
+    <div class="steps4">
+      <article class="st"><div class="stn">A · OBSERVE</div><h3>Watch every launchpad</h3><p>The scanner follows token factories and new pools across <b class="lpads">12</b> launchpads on Robinhood Chain, block by block.</p>
+        <pre class="term"><i>$</i> observ scan --chain 4663
+<span class="ok">✓</span> block 112,605,894 · 3 txs matched
+<span class="ok">✓</span> PONS  launch  $SNUMMO
+<span class="ok">✓</span> FLAP  pool    $NVDAAI/WETH</pre></article>
+      <article class="st"><div class="stn">B · DECODE</div><h3>Read the contract</h3><p>Paste a tx hash or token address. The agent reads metadata, holders, creator wallet and runs a swap test.</p>
+        <pre class="term"><i>$</i> observ decode 0x4444…4444
+holders      9
+top-10       28.1%
+creator      0x3333…3333 · 5.0%
+swap test    buy ✓  sell ✓</pre></article>
+      <article class="st"><div class="stn">C · FLAG</div><h3>Score the signals</h3><p>Heuristics turn on-chain facts into a 0–100 signal score. It is a flag to look closer, never a verdict.</p>
+        <pre class="term"><i>$</i> observ threat $OCAT
+<span class="warn">▲</span> CREATOR_EXIT        +25
+<span class="warn">▲</span> BUNDLED_GENESIS     +20
+score 45/100 · <span class="warn">ELEVATED</span>
+<span class="dim">heuristic · not advice</span></pre></article>
+      <article class="st"><div class="stn">D · REPORT</div><h3>Write it down</h3><p>Every token gets a Genesis Certificate. Every day ends with The 4663 Daily, ready to post.</p>
+        <pre class="term"><i>$</i> observ daily --publish
+edition 135 · 2 launches
+1 graduation · 1 flagged
+<span class="ok">✓</span> certificate #0x4444 sealed
+<span class="ok">✓</span> dispatch ready</pre></article>
+    </div>
+  </section>
+
+  <section class="ls" id="caps">
+    <div class="lhead"><span class="lnum">02</span><h2>Six instruments, <em>one</em> observatory</h2><p>Everything runs from live chain data. Open any instrument straight from here.</p></div>
+    <div class="caps">
+      <article class="cap"><div class="capk">SCANNER</div><h3>Multi-launchpad feed</h3><p>Launches, curve buys, graduations and new DEX pools from every watched pad, streamed live.</p><div class="capv"><span>PONS</span><span>FLAP</span><span>HOOD.FUN</span><span>+ MORE</span></div><button data-open="bCov">OPEN COVERAGE ▸</button></article>
+      <article class="cap"><div class="capk">THREAT RADAR</div><h3>Heuristic threat signals</h3><p>Honeypot sell tests, creator exits, bundled genesis, clones and fake volume, scored and explained.</p><div class="capv bars"><i style="width:82%"></i><i style="width:46%"></i><i style="width:28%"></i></div><button data-open="bThreat">OPEN RADAR ▸</button></article>
+      <article class="cap"><div class="capk">GENESIS</div><h3>Birth certificate per token</h3><p>Who deployed it, when, from which launchpad, first holders and liquidity, sealed in one card.</p><div class="capv mono">BLK 112,602,736 · PONS · 0x…8888</div><button data-open="bCert">OPEN GENESIS ▸</button></article>
+      <article class="cap"><div class="capk">DISPATCH</div><h3>The 4663 Daily</h3><p>A newspaper for the chain: today's numbers, leaders and flags, written by the agent, copy-ready for X.</p><div class="capv mono">EDITION 135 · FREE · ON-CHAIN</div><button data-open="bDaily">READ TODAY ▸</button></article>
+      <article class="cap"><div class="capk">QUERY AGENT</div><h3>Ask the chain anything</h3><p>Plain-language questions answered from live telemetry, with the views it used opened for you.</p><div class="capv mono">› any anomalies in the last 5 min?</div><button data-ask="1">ASK THE AGENT ▸</button></article>
+      <article class="cap"><div class="capk">AGENT KIT</div><h3>Copy OBSERV into your agent</h3><p>One click builds a context pack with the live endpoints so your own assistant can read the chain too.</p><div class="capv mono">TOOLS · CONTEXT · PROMPTS</div><button data-open="bKit">OPEN AGENT KIT ▸</button></article>
+    </div>
+  </section>
+
+  <section class="ls" id="replay">
+    <div class="lhead"><span class="lnum">03</span><h2>Watch a <em>session</em></h2><p>Scroll to play a replay of the agent catching a fresh launch. Sample data, real workflow.</p></div>
+    <div class="rp-wrap" id="rpWrap">
+      <div class="rp-stick">
+        <div class="rp-win">
+          <div class="rp-bar"><span>observ-agent@4663:~/live$</span><span id="rpPct">REPLAY 0%</span></div>
+          <pre class="rp-body" id="rpBody"></pre>
+          <div class="rp-prog"><i id="rpProg"></i></div>
+        </div>
+        <ol class="rp-phase" id="rpPhase"><li>OBSERVE</li><li>DECODE</li><li>FLAG</li><li>REPORT</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="lstats" id="stats">
+    <div><b data-count="pads">0</b><span>LAUNCHPADS WATCHED</span></div>
+    <div><b data-count="chains">0</b><span>CHAIN LIVE · <em data-count="planned">0</em> PLANNED</span></div>
+    <div><b data-count="signals">13</b><span>THREAT SIGNALS</span></div>
+    <div><b data-count="ms">100</b><span>MS BLOCK TIME</span></div>
+    <div><b>0</b><span>WALLETS CONNECTED · READ-ONLY</span></div>
+  </section>
+
+  <section class="ls" id="faq">
+    <div class="lhead"><span class="lnum">04</span><h2>Questions</h2><p>Short answers. Ask the agent for long ones.</p></div>
+    <div class="faq">
+      <details open><summary>Is OBSERV free to use?</summary><p>Yes. The observatory, threat radar, genesis certificates and The 4663 Daily are free and need no sign-up. Agent questions have a fair-use limit per visitor.</p></details>
+      <details><summary>Is anything here financial advice?</summary><p>No. OBSERV describes what happened on-chain. It never tells you to buy, sell or hold, and a low threat score does not mean a token is safe.</p></details>
+      <details><summary>How is the threat score calculated?</summary><p>Each heuristic signal (sell blocked, creator exit, bundled genesis, top-10 concentration, clone names, fake volume and more) adds a weighted amount, capped at 100. Every signal is shown with the data behind it, and anything that couldn't be checked is listed as not evaluated.</p></details>
+      <details><summary>Does it connect to my wallet?</summary><p>Never. OBSERV is read-only: no wallet connection, no signatures, no approvals. If any site asks you to connect a wallet "for OBSERV", it isn't us.</p></details>
+      <details><summary>Where does the data come from?</summary><p>Directly from Robinhood Chain RPC (blocks, logs, contract reads) and DexPaprika for pools and market data.</p></details>
+      <details><summary>Which chains and launchpads are covered?</summary><p><span class="lpadlist">Robinhood Chain launchpads</span>. Elysium is next on the roadmap, followed by more chains. Open Coverage for the live map.</p></details>
+    </div>
+  </section>
+
+  <section class="ls ltoken" id="token">
+    <div class="lhead"><span class="lnum">05</span><h2><span class="ltk">$TOKEN</span> <em>token</em></h2><p>The community token behind the observatory.</p></div>
+    <div class="tkgrid">
+      <div class="tkcard">
+        <dl>
+          <dt>TICKER</dt><dd class="ltk">$TOKEN</dd>
+          <dt>CHAIN</dt><dd>Robinhood Chain · 4663</dd>
+          <dt>LAUNCHPAD</dt><dd class="llp">Pons</dd>
+          <dt>CONTRACT</dt><dd class="lca"><span>coming soon</span><button class="lcopy" hidden>COPY</button></dd>
+        </dl>
+        <div class="tklinks" id="tkLinks"></div>
+      </div>
+      <p class="tkdisc">Community token. Not affiliated with Robinhood Markets, Inc. Holding it gives no claim on revenue or profits and is not an investment contract. Nothing on this site is financial advice. Always verify the contract address above before interacting.</p>
+    </div>
+  </section>
+
+  <section class="ls lbegin" id="begin">
+    <span class="lnum">06</span>
+    <h2>Start <em>observing</em></h2>
+    <p>The chain is live right now. Go back up and ask it something.</p>
+    <div class="lcta"><button data-top="1">▲ BACK TO THE OBSERVATORY</button><button data-ask="1" class="alt">ASK THE AGENT ↵</button></div>
+  </section>
+
+  <footer class="lfoot">
+    <div class="lf-brand"><b>OBSERV AGENT</b><span>Read-only intelligence for Robinhood Chain.</span></div>
+    <nav><a href="#how">How it works</a><a href="#caps">Instruments</a><a href="#replay">Replay</a><a href="#faq">FAQ</a><a href="#token">Token</a><span id="lfSocial"></span></nav>
+    <div class="lf-legal">Data: <a href="https://dexpaprika.com" target="_blank" rel="noopener">DexPaprika</a> + Robinhood Chain RPC · Observation only · Not financial advice</div>
+  </footer>
+</main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script>/*OBSERV_BOOT*/</script>
@@ -1676,6 +1916,137 @@
   const CA = clean(ENV.TOKEN_CA), CA_OK = /^0x[a-fA-F0-9]{40}$/.test(CA);
   const TICKER = clean(ENV.TOKEN_TICKER) || '$TOKEN';
   const PX = handle(ENV.PROJECT_X), DX = handle(ENV.DEV_X);
+
+  // FIELD NOTES — short, original wisdom for the humans behind the wallets
+  const NOTES = [
+    "The chain never sleeps. You should. Decisions made at 4 a.m. are rarely your best.",
+    "Only risk what you could lose without losing yourself.",
+    "If you can't explain why you're buying, you're not investing. You're hoping.",
+    "Urgency is the oldest trick in the book. Real opportunities survive a night's sleep.",
+    "Your seed phrase is your house key. Nobody legitimate will ever ask for it.",
+    "Taking profit is not betrayal. It is the point.",
+    "A chart can't see your rent, your health or your family. You can.",
+    "Missing a pump costs nothing. Chasing one can cost everything.",
+    "Verify the contract, not the vibe.",
+    "Size small enough that you can still think clearly when it moves against you.",
+    "Every cycle forgets the last one. Write your lessons down before the next.",
+    "Green candles feel like skill. Red candles teach it.",
+    "Guaranteed returns are guaranteed lies.",
+    "Logging off is a valid strategy.",
+    "Your worth is not your portfolio balance.",
+    "Holding is a choice, not a virtue. Have a plan for both directions.",
+    "The best trade of your year might be the one you didn't take.",
+    "Trust code you can read and people who can say \"I was wrong\" out loud.",
+    "Revenge trading turns one loss into many. Walk away. Come back tomorrow.",
+    "Before you ape in, ask: who is selling this to me, and why?",
+    "Patience compounds faster than leverage.",
+    "Protect your peace the way you protect your keys.",
+    "Nobody shares their losses in the group chat. Remember that when you compare.",
+    "Observe first. The chain tells the truth to those who wait."
+  ];
+  (() => {
+    const tx = $('#wisTx'), bar = $('#wisBar'), HOLD = 16000;
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let i = Math.floor((Date.now() / 86400000) * 3) % NOTES.length, timer, typing, t0;
+    $('#wisT').textContent = NOTES.length;
+    function show(k){
+      i = (k + NOTES.length) % NOTES.length; clearTimeout(timer); clearInterval(typing);
+      $('#wisN').textContent = String(i + 1).padStart(2, '0');
+      const line = NOTES[i];
+      if(calm){ tx.textContent = line; }
+      else { let n = 0; tx.innerHTML = '<span class="cur"></span>';
+        typing = setInterval(() => { n += 2; tx.textContent = line.slice(0, n); tx.insertAdjacentHTML('beforeend', '<span class="cur"></span>'); if(n >= line.length) clearInterval(typing); }, 28); }
+      t0 = performance.now(); timer = setTimeout(() => show(i + 1), HOLD);
+    }
+    (function tick(){ if(t0) bar.style.width = Math.min(100, (performance.now() - t0) / HOLD * 100) + '%'; requestAnimationFrame(tick); })();
+    $('#wisNext').onclick = () => show(i + 1);
+    $('#wisShare').onclick = () => {
+      const tag = PX ? ' — via @' + PX : '';
+      const url = location.origin + location.pathname;
+      window.open('https://x.com/intent/post?text=' + encodeURIComponent('"' + NOTES[i] + '"' + tag + '\n\nField notes for humans in crypto · ' + url), '_blank', 'noopener');
+    };
+    document.addEventListener('visibilitychange', () => { if(document.hidden) clearTimeout(timer); else show(i); });
+    show(i);
+  })();
+
+  // ===================== FIELD MANUAL (landing below the observatory) =====================
+  (() => {
+    const land = $('#land'); if(!land) return;
+    const LPN2 = clean(ENV.LAUNCHPAD_NAME) || 'Pons';
+    // marquee
+    const ph = 'OBSERVE ✦ DECODE ✦ FLAG ✦ CERTIFY ✦ REPORT ✦ ';
+    $('#lmarq').textContent = ph.repeat(8);
+    // registry-driven copy
+    const planned = REG.chains.filter(c => c.status !== 'live').length;
+    land.querySelectorAll('.lpads').forEach(e => e.textContent = PADS.length);
+    land.querySelectorAll('.lpadlist').forEach(e => e.textContent = 'Robinhood Chain: ' + PADS.map(p => p.name).join(', '));
+    // token
+    land.querySelectorAll('.ltk').forEach(e => e.textContent = TICKER);
+    land.querySelectorAll('.llp').forEach(e => e.textContent = LPN2);
+    const ca = land.querySelector('.lca span'), cb = land.querySelector('.lcopy');
+    if(CA_OK){ ca.textContent = CA; cb.hidden = false; cb.onclick = async () => { try { await navigator.clipboard.writeText(CA); toast(`${TICKER} contract address copied.`); } catch(_){ toast('Clipboard blocked.'); } }; }
+    const links = [];
+    if(PX) links.push(['X / TWITTER ↗', 'https://x.com/' + PX]);
+    if(safeUrl(ENV.TELEGRAM_URL)) links.push(['TELEGRAM ↗', safeUrl(ENV.TELEGRAM_URL)]);
+    if(safeUrl(ENV.LAUNCHPAD_URL || ENV.PONS_URL)) links.push([LPN2.toUpperCase() + ' ↗', safeUrl(ENV.LAUNCHPAD_URL || ENV.PONS_URL)]);
+    if(safeUrl(ENV.EXPLORER_URL) && CA_OK) links.push(['EXPLORER ↗', safeUrl(ENV.EXPLORER_URL).replace(/\/$/, '') + '/token/' + CA]);
+    $('#tkLinks').innerHTML = links.length ? links.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`).join('') : '<span style="font-size:11px;color:var(--ink2)">Official links appear here at launch.</span>';
+    $('#lfSocial').innerHTML = links.filter(l => /X \/|TELEGRAM/.test(l[0])).map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t.replace(' ↗', ''))}</a>`).join('');
+    // buttons
+    const toTop = (then) => { window.scrollTo({top: 0, behavior: 'smooth'}); if(then) setTimeout(then, 650); };
+    land.querySelectorAll('[data-open]').forEach(b => b.onclick = () => toTop(() => { const t = $('#' + b.dataset.open); if(t) t.click(); }));
+    land.querySelectorAll('[data-ask]').forEach(b => b.onclick = () => toTop(() => { const i = $('#askI'); if(i) i.focus(); }));
+    land.querySelectorAll('[data-top]').forEach(b => b.onclick = () => toTop());
+    // reveal + counters
+    const COUNT = {pads: PADS.length, chains: LIVE_CHAINS.length, planned, signals: 13, ms: 100};
+    land.querySelectorAll('.ls .lhead, .st, .cap, .faq details, .tkcard, .tkdisc, .lbegin > *').forEach(e => e.classList.add('rv'));
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if(!e.isIntersecting) return; e.target.classList.add('in'); io.unobserve(e.target);
+      if(e.target.id === 'stats') e.target.querySelectorAll('[data-count]').forEach(n => {
+        const to = COUNT[n.dataset.count] ?? +n.textContent, t0 = performance.now();
+        (function f(t){ const k = Math.min(1, (t - t0) / 1100); n.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))); if(k < 1) requestAnimationFrame(f); })(t0);
+      });
+    }), {threshold: .18});
+    land.querySelectorAll('.rv, #stats').forEach(e => io.observe(e));
+    // scroll-driven session replay
+    const pick = () => { const t = (S.tokens || []).find(x => x && x.symbol) || {}; return {sym: '$' + String(t.symbol || 'NOVA').replace(/^\$/, '').slice(0, 12), pad: String(t.pad || t.launchpad || LPN2).toUpperCase()}; };
+    const script = (k) => [
+      ['u', '› watch robinhood --all-pads'],
+      ['t', `  streaming ${PADS.length} launchpads · block time 100ms`],
+      ['ok', `  ✓ ${k.pad}  TokenLaunched  ${k.sym}  blk 112,606,410`],
+      ['u', `› decode ${k.sym}`],
+      ['t', '  reading metadata · holders · creator wallet …'],
+      ['t', '  holders 41 · top-10 63.0% · creator 18.5%'],
+      ['t', '  swap test  buy ✓  sell ✓  tax 0%'],
+      ['u', `› threat ${k.sym}`],
+      ['w', '  ▲ CREATOR_CONCENTRATION   +20'],
+      ['w', '  ▲ TOP10                   +15'],
+      ['w', '  score 35/100 · ELEVATED · heuristic, not a verdict'],
+      ['u', '› ask "should I be careful with this one?"'],
+      ['a', `The creator still holds 18.5% and the top ten wallets hold most of the supply, so a few wallets can move the price. Sells work and there's no tax. Watch whether the creator wallet starts moving. Not advice.`],
+      ['u', `› certify ${k.sym} && daily --append`],
+      ['ok', '  ✓ genesis certificate sealed'],
+      ['ok', '  ✓ added to The 4663 Daily · edition 135'],
+    ];
+    const wrap = $('#rpWrap'), body = $('#rpBody'), prog = $('#rpProg'), pct = $('#rpPct'), phs = [...$('#rpPhase').children];
+    const PH_AT = [0, 3, 7, 13];
+    let lines = script(pick()), last = -1;
+    function render(){
+      const r = wrap.getBoundingClientRect(), span = r.height - innerHeight * .7;
+      const p = Math.max(0, Math.min(1, (-r.top + innerHeight * .25) / Math.max(1, span)));
+      if(p === 0 && last <= 0) lines = script(pick());
+      const total = lines.reduce((a, l) => a + l[1].length, 0), shown = Math.round(total * p);
+      if(shown === last) return; last = shown;
+      let left = shown, html = '', cur = 0;
+      for(const [c, txt] of lines){ if(left <= 0) break; const part = txt.slice(0, left); left -= txt.length; cur++; html += `<span class="${c}">${esc(part)}</span>\n`; }
+      body.innerHTML = html + (p < 1 ? '<span class="cur"></span>' : '<span class="t">— end of replay · scroll up to run it again —</span>');
+      prog.style.width = (p * 100) + '%'; pct.textContent = 'REPLAY ' + Math.round(p * 100) + '%';
+      phs.forEach((li, i) => li.classList.toggle('on', cur > PH_AT[i] && (i === 3 || cur <= PH_AT[i + 1])));
+    }
+    addEventListener('scroll', render, {passive: true}); addEventListener('resize', render); render();
+    // header: one entry to jump to the manual
+    const nav = $('#hnav'); if(nav && !$('#bManual')){ const b = document.createElement('button'); b.className = 'hbtn'; b.id = 'bManual'; b.textContent = 'MANUAL ↓'; b.onclick = () => $('#how').scrollIntoView({behavior: 'smooth'}); nav.appendChild(b); }
+  })();
 
   // header
   $('#brand').textContent = clean(ENV.PROJECT_NAME) || 'OBSERV AGENT';
