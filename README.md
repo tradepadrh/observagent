@@ -52,6 +52,7 @@ bash push.sh "OBSERV v1" main       # push ke branch main (production)
 | `PROJECT_X`, `DEV_NAME`, `DEV_X`, `DEV_ROLE`, `DEV_BIO`, `TELEGRAM_URL`, `WEBSITE_URL` | Panel **TOKEN · DEV**. |
 | `AI_API_KEY` | Mengaktifkan AI agent. Provider dideteksi dari awalan key: `gsk_…` Groq (gratis), `AIza…` Gemini (gratis), `sk-or-…` OpenRouter, `sk-ant-…` Anthropic. Kosong (default, gratis) = **OBSERV CORE**: engine intent di halaman yang menjawab dari data live tanpa biaya API — scan token ($SYMBOL / 0x…), decode tx, hottest signal, anomali, gas/tps, graduations, coverage, daily, genesis. |
 | `AI_MODEL` | Opsional. Default Groq `openai/gpt-oss-120b`, Gemini `gemini-flash-latest`. |
+| `AI_LANGUAGE` | `en` (default) = AI selalu menjawab bahasa Inggris. `auto` = menyesuaikan bahasa penanya. |
 | `AI_PROVIDER` / `AI_BASE_URL` | Opsional, untuk provider lain yang kompatibel OpenAI. |
 | `AI_DEBUG_ERRORS` | `1` = tampilkan alasan error di web (untuk debug). Default: pengunjung otomatis dapat jawaban mode lokal, alasan hanya di log Railway (`agent-core:`). |
 | `AI_PER_IP_PER_MINUTE`, `AI_DAILY_LIMIT` | Batas biaya AI (default 6/menit per IP, 800/hari). |
