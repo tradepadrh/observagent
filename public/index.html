@@ -636,6 +636,7 @@
     .tkcard dl{grid-template-columns:104px 1fr}
     .lfoot{grid-template-columns:1fr} .lfoot nav{justify-content:flex-start}
   }
+  .ask-tools .trace,#askTools .trace{display:block;flex-basis:100%;width:100%;font-size:9.5px;letter-spacing:.06em;color:var(--ink2);opacity:.85;border:0;background:none;padding:0;margin:0 0 2px}
 </style>
 </head>
 <body>
@@ -2334,10 +2335,10 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
 
   /* =========================================================
      ASK AI — the agent core runs on the server (/api/ask).
-     Local scripted answers over the same live data when AI is off.
+     OBSERV CORE intent engine answers on-page over the same live data.
      ========================================================= */
   const AI = {history:[], busy:false, lastPlain:'', server: !!ENV.AI_ENABLED, voice: 'speechSynthesis' in window};
-  function setMode(){ $('#askMode').textContent = AI.server ? 'OBSERV AGENT CORE · READING LIVE ON-CHAIN TELEMETRY · NOT ADVICE' : 'LOCAL MODE · SCRIPTED ANSWERS OVER LIVE DATA (AI UPLINK NOT CONFIGURED) · NOT ADVICE'; }
+  function setMode(){ $('#askMode').textContent = AI.server ? 'OBSERV AGENT CORE · READING LIVE ON-CHAIN TELEMETRY · NOT ADVICE' : 'OBSERV CORE · ON-CHAIN INTENT ENGINE · LIVE TELEMETRY · NOT ADVICE'; }
   setMode();
 
   // --- local read models (used by the fallback and the Agent Kit)
@@ -2401,7 +2402,7 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
     {name:'get_coverage', description:'Chains and launchpads watched, with genesis and flagged counts.', method:'GET', path:'/api/coverage', inputSchema:{type:'object', properties:{}}},
     {name:'get_daily_report', description:'Today\'s aggregated dispatch (The 4663 Daily).', method:'GET', path:'/api/daily', inputSchema:{type:'object', properties:{}}},
   ];
-  const LABEL = {get_live_stats:'pull telemetry', get_recent_events:'scan event stream', get_token:'read genesis record', get_project_info:'read official registry', get_coverage:'map coverage', scan_token_risk:'run threat scan', focus_visual:'redirect optics', open_view:'open view'};
+  const LABEL = {get_threat_radar:'sweep threat radar', decode_transaction:'decode transaction', get_daily_report:'compile dispatch', get_live_stats:'pull telemetry', get_recent_events:'scan event stream', get_token:'read genesis record', get_project_info:'read official registry', get_coverage:'map coverage', scan_token_risk:'run threat scan', focus_visual:'redirect optics', open_view:'open view'};
 
   const askEl = $('#ask'), askOut = $('#askOut'), askA = $('#askA'), askTools = $('#askTools');
   function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -2454,51 +2455,125 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
     return j.text || '';
   }
 
-  // local fallback: scripted phrasing over the same live data
+  // OBSERV CORE
   async function askLocal(q){
-    const s = q.toLowerCase();
-    const step = async (name, fn) => { const done = toolChip(name); await new Promise(r => setTimeout(r, 300)); const r = await fn(); done(); return r; };
+    // OBSERV CORE — on-page intent engine over live telemetry. Zero API cost.
+    const s = q.toLowerCase(), t0 = performance.now();
+    const trace = (txt) => { const el = document.createElement('span'); el.className = 'trace'; el.textContent = txt; askTools.appendChild(el); gsap.from(el, {opacity:0, x:-6, duration:.2}); };
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const step = async (name, fn) => { const done = toolChip(name); await wait(220 + Math.random()*180); const r = await fn(); done(); return r; };
+    const ago = at => { const m = Math.max(0, Math.round((Date.now() - at)/60000)); return m < 1 ? 'under a minute ago' : m + ' min ago'; };
+    // entities
+    const tx = (q.match(/0x[0-9a-fA-F]{64}/) || [])[0], addr = !tx && (q.match(/0x[0-9a-fA-F]{40}/) || [])[0];
+    const symM = q.match(/\$([A-Za-z0-9]{2,15})/), symTok = symM && symM[1].toUpperCase() !== String(TICKER).replace('$','').toUpperCase() ? findToken(symM[1]) : null;
+    const symHit = symTok && symTok.name.replace('$','').toUpperCase() === symM[1].toUpperCase() ? symTok : null;
+    // intent scoring: weighted keyword hits, best score wins
+    const I = {
+      project:  [/\bca\b|contract address|your token|\$observ|developer|\bdev\b|founder|official|twitter|\bx account|telegram|website/, 3],
+      threat:   [/threat|danger|risk|rug|scam|honeypot|safe|bahaya|berbahaya|aman|penipuan|flag|suspicious|careful|hati/, 2],
+      hot:      [/hot|hottest|trending|active|busiest|top|leader|ramai|rame|populer|signal right now|what.?s happening|lagi apa/, 2],
+      anomaly:  [/anomal|unusual|spike|weird|strange|odd|aneh|lonjakan|outlier/, 3],
+      network:  [/gas|tps|tx\/s|throughput|block|speed|fee|latency|network health|congest|jaringan/, 2],
+      grad:     [/graduat|lulus|migrat|bonded|to dex/, 3],
+      coverage: [/launchpad|coverage|which chain|chains|elysium|ascend|hyperliquid|flap|fobo|pools\.trade|clanker|virtuals|doppler|support/, 2],
+      advice:   [/\bbuy\b|\bsell\b|\bhold\b|price|pump|moon|profit|invest|worth|beli|jual|harga|cuan|entry|target/, 2],
+      bonding:  [/bonding|curve/, 3],
+      genesis:  [/certificate|genesis|birth|akta|sertifikat|latest|newest|terbaru|new token|baru/, 2],
+      daily:    [/daily|dispatch|report|laporan|harian|summary|ringkas|recap/, 2],
+      about:    [/who are you|what are you|what can you|help|model|gpt|claude|llm|powered|siapa kamu|bisa apa|kemampuan/, 3],
+      hello:    [/^(hi|hello|hey|gm|halo|hai|yo|sup)\b/, 2],
+    };
+    let intent = 'overview', best = 0;
+    for(const [k, [re, w]] of Object.entries(I)){ const m = s.match(new RegExp(re.source, 'g')); const sc = m ? m.length * w : 0; if(sc > best){ best = sc; intent = k; } }
+    if(tx) { intent = 'tx'; best = 9; }
+    else if(addr && intent !== 'project') { intent = /certificate|genesis|birth|sertifikat/.test(s) ? 'genesis' : 'threat'; best = Math.max(best, 7); }
+    else if(symHit && ['overview','hello','hot'].includes(intent)) { intent = 'token'; best = 6; }
+    const conf = Math.min(.99, .62 + best * .045 + (tx || addr || symHit ? .12 : 0));
+    trace(`◇ parse  ${q.length} chars · ${(s.match(/\w+/g) || []).length} tokens`);
+    await wait(160);
+    trace(`◇ intent ${intent.toUpperCase()} · confidence ${conf.toFixed(2)}`);
+    const ents = [tx && 'tx ' + short(tx), addr && 'contract ' + short(addr), symHit && symHit.name].filter(Boolean);
+    if(ents.length){ await wait(120); trace(`◇ entity ${ents.join(' · ')}`); }
+    await wait(140);
+
     let out;
-    if(/\bca\b|contract address|your token|\$observ|developer|\bdev\b|founder|official|twitter|\bx account|telegram|website/.test(s)){
+    const scan = async (ca) => step('scan_token_risk', () => getJSON(`/api/threat/${ca}`));
+    const threatText = (sc) => sc.signals.length
+      ? `Threat scan on **$${sc.symbol}** (${sc.launchpadName || 'DEX'}): score **${sc.score}/100 (${sc.level})**. Strongest signals: ${sc.signals.slice(0,3).map(x => x.label.toLowerCase() + ' — ' + String(x.evidence).replace(/\.$/, '')).join('; ')}. Heuristic flags, not a verdict.`
+      : `Threat scan on **$${sc.symbol}**: score **0/100**. No heuristic signals triggered at scan time. No signals does not mean safe.`;
+
+    if(intent === 'project'){
       const pi = await step('get_project_info', () => getJSON('/api/project')); openToken();
       out = pi.contract_address
-        ? `Official ${pi.ticker} contract: **${pi.contract_address}** on ${pi.chain} (${pi.chain_id}).${pi.developer.x ? ' Developer: **' + pi.developer.x + '**.' : ''}${pi.project_x ? ' Project: ' + pi.project_x + '.' : ''} Always verify the CA against this panel before interacting.`
-        : `${pi.ticker} is in **pre-launch** — no contract address has been published yet.${pi.developer.x ? ' Developer: **' + pi.developer.x + '**.' : ''} Any CA circulating right now is not official.`;
-    } else if(/threat|danger|risk|rug|scam|honeypot|safe|bahaya|berbahaya|aman|penipuan/.test(s)){
-      const caM = q.match(/0x[0-9a-fA-F]{40}/);
-      let sc;
-      if(caM) sc = await step('scan_token_risk', () => getJSON(`/api/threat/${caM[0]}`));
-      else {
-        const list = await step('scan_token_risk', () => getJSON('/api/radar'));
-        const pick1 = /highest|riskiest|worst|paling/.test(s) ? list[0] : (S.tokens.length ? null : list[0]);
-        const target = pick1 ? pick1.token : (S.tokens[S.tokens.length-1] || {}).contract;
-        if(!target) { out = 'No tokens scanned yet — the scanner is still warming up.'; await typeLine(askA, render(out), 9); return out; }
-        sc = await getJSON(`/api/threat/${target}`);
+        ? `Official ${pi.ticker} contract: **${pi.contract_address}** on ${pi.chain} (${pi.chain_id}).${pi.developer && pi.developer.x ? ' Developer: **' + pi.developer.x + '**.' : ''} Always verify the CA here before interacting.`
+        : `${pi.ticker} is in **pre-launch**. No contract address has been published yet, so any CA circulating right now is not official.`;
+    } else if(intent === 'tx'){
+      await step('decode_transaction', async () => { decode(tx); await wait(500); });
+      out = `Decoding transaction **${short(tx)}**: method, status, fee and every token transfer are opening in the X-RAY panel now.`;
+    } else if(intent === 'threat' || intent === 'token'){
+      let ca = addr || (symHit && symHit.contract);
+      if(!ca){
+        const list = await step('get_threat_radar', () => getJSON('/api/radar'));
+        const pick = /highest|riskiest|worst|paling/.test(s) ? list[0] : null;
+        ca = pick ? pick.token : (S.tokens[S.tokens.length-1] || {}).contract;
       }
-      focusVisual({target:'bands'});
-      out = sc.signals.length
-        ? `Threat scan on **$${sc.symbol}** (${sc.launchpadName || 'DEX'}): score **${sc.score}/100 (${sc.level})**. Signals detected: ${sc.signals.slice(0,3).map(x => x.label.toLowerCase() + ' — ' + x.evidence).join(' ')} Heuristic signals, not a verdict — open the genesis certificate for the full evidence trail.`
-        : `Threat scan on **$${sc.symbol}**: score **0/100**. No heuristic signals triggered at scan time. The absence of signals does not mean a token is safe.`;
-    } else if(/launchpad|coverage|chain|network|elysium|ascend|hyperliquid|flap|fobo|pools|clanker|virtuals|doppler|support/.test(s)){
+      if(!ca) out = 'No tokens scanned yet. The scanner is still warming up — try again in a minute.';
+      else { const sc = await scan(ca); focusVisual({target:'bands'}); out = threatText(sc);
+        if(intent === 'token' && symHit) out = `**${symHit.name}** launched on ${padOf(symHit).name} ${ago(symHit.at)}${symHit.graduated ? ' and has already graduated to DEX' : ''}. ` + out; }
+    } else if(intent === 'hot'){
+      const st = await step('get_live_stats', async () => toolStats({window_seconds:300}));
+      const pads = Object.entries(st.launches_by_launchpad).sort((a,b) => b[1]-a[1]);
+      const fl = Object.entries(st.equity_flow_usd)[0], last = S.tokens[S.tokens.length-1];
+      focusVisual({target:'core'});
+      out = `Hottest signal right now: ${pads.length ? `**${pads[0][0]}** leads launches with ${pads[0][1]} in 5 min` : 'launch activity is quiet'}${fl ? `, and **${fl[0]}** carries the strongest stock-token flow (+${usd(fl[1])})` : ''}. ${last ? `Newest genesis: **${last.name}** on ${padOf(last).name}, ${ago(last.at)}.` : ''} ${st.threat_flags ? `${st.threat_flags} threat flag(s) raised in the same window.` : 'No threat flags in the window.'}`;
+    } else if(intent === 'anomaly'){
+      const st = await step('get_live_stats', async () => toolStats({window_seconds:300}));
+      const radar = await step('get_threat_radar', () => getJSON('/api/radar').catch(() => []));
+      const rate1 = st.launches_last_60s, avg = st.launches_avg_per_minute_5m, h = st.tx_per_second_60s;
+      const notes = [];
+      if(avg > 0 && rate1 >= Math.max(3, avg * 2)) notes.push(`launch rate spiked to **${rate1}/min** vs a ${avg}/min average`);
+      if(h && h.max > h.avg * 1.8) notes.push(`throughput peaked at **${h.max} tx/s** (avg ${h.avg})`);
+      const hi = (radar || []).filter(r => r.score >= 50);
+      if(hi.length) notes.push(`**${hi.length}** token(s) at ELEVATED+ threat, highest **$${hi[0].symbol || short(hi[0].token)}** at ${hi[0].score}/100`);
+      out = notes.length ? `Anomalies in the last 5 min: ${notes.join('; ')}.` : `No anomalies in the last 5 min. Launch rate ${rate1}/min (avg ${avg}), throughput steady${h ? ` around ${h.avg} tx/s` : ''}, no tokens above ELEVATED.`;
+      if(hi.length) focusVisual({target:'bands'});
+    } else if(intent === 'network'){
+      const st = await step('get_live_stats', async () => toolStats({window_seconds:60}));
+      focusVisual({target:'chain'});
+      out = `Robinhood Chain is at block **${st.block != null ? fmt(st.block) : '—'}**, **${st.tx_per_second_now ?? '—'} tx/s** now${st.tx_per_second_60s ? ` (60s range ${st.tx_per_second_60s.min}–${st.tx_per_second_60s.max})` : ''}, gas **${st.gas_gwei ?? '—'} gwei**. Blocks land roughly every 100 ms.`;
+    } else if(intent === 'grad'){
+      const st = await step('get_live_stats', async () => toolStats({window_seconds:3600}));
+      const g = [...S.ev].reverse().find(e => e.type === 'graduate'), gt = g && g.raw ? findToken(g.raw.contract || g.raw.token) : null;
+      out = `**${st.graduations} graduation(s)** in the last hour — tokens that filled their bonding curve and moved to a DEX pool.${g ? ` Latest: **${gt ? gt.name : 'a token'}** from ${(PAD_BY[g.pad] || {name:'a launchpad'}).name}, ${ago(g.at)}.` : ''}`;
+      if(gt) setTimeout(() => openCert(gt.contract), 900);
+    } else if(intent === 'coverage'){
       const cv = await step('get_coverage', () => getJSON('/api/coverage')); openCoverage();
       const live = cv.launchpads.filter(p => !p.standby), lead = live.slice().sort((a,b) => b.geneses5m - a.geneses5m)[0];
-      out = `Live coverage: **${live.length} launchpads** on ${cv.chains.filter(c => c.status === 'live').map(c => c.name).join(', ')} — ${live.map(l => l.name).join(', ')}. Most active right now: **${lead ? lead.name : '—'}** (${lead ? lead.geneses5m : 0} launches in 5 min). Next chain: ${(cv.chains.find(c => c.priority) || {}).name || '—'}.`;
-    } else if(/buy|sell|hold|price|pump|moon|profit|invest|worth|beli|jual|harga|cuan/.test(s)){
+      out = `Live coverage: **${live.length} launchpads** on ${cv.chains.filter(c => c.status === 'live').map(c => c.name).join(', ')}: ${live.map(l => l.name).join(', ')}. Most active now: **${lead ? lead.name : '—'}**. Elysium is next on the roadmap.`;
+    } else if(intent === 'advice'){
       const st = await step('get_live_stats', async () => toolStats({window_seconds:300}));
-      out = `I don't issue buy/sell calls or price predictions. Raw signal instead: in the last 5 minutes, **${st.token_launches} token launches** and **${st.new_dex_pools} new DEX pools**. Want the latest genesis certificate so you can assess it yourself?`;
-    } else if(/bonding/.test(s)){
+      out = `I don't give buy/sell calls or price targets. What the chain shows: **${st.token_launches} launches**, **${st.new_dex_pools} new pools** and **${st.threat_flags} threat flags** in 5 min. Ask me to scan a specific token and I'll show its signals.`;
+    } else if(intent === 'bonding'){
       focusVisual({target:'bands'});
-      out = `A bonding curve is an automated price ladder: every buy nudges the price up a step, every sell steps it down. Curve launchpads such as Pons V2 and Flap start tokens on this curve; when it fills to its target the token **graduates** to a DEX pool. Each genesis certificate shows the live progress.`;
-    } else if(/certificate|genesis|birth|akta|sertifikat|latest|newest|terbaru/.test(s)){
-      const t = findToken(); if(!t){ out = 'No genesis recorded yet — stand by.'; }
-      else { await step('get_token', async () => t); openCert(t.contract); out = `Opening the genesis certificate for **${t.name}** (${padOf(t).name}), launched ${Math.max(0, Math.round((Date.now() - t.at)/60000))} min ago.`; }
-    } else if(/daily|dispatch|report|laporan|harian/.test(s)){
-      openDaily(); out = `Opening **The 4663 Daily** — today's dispatch, compiled from live on-chain data.`;
+      out = `A bonding curve is an automated price ladder: each buy moves the price up a step, each sell moves it down. Curve launchpads like Pons and Flap start tokens there; once the curve fills its target, liquidity **graduates** to a DEX pool and normal trading begins.`;
+    } else if(intent === 'genesis'){
+      const t = addr ? {contract: addr.toLowerCase(), name: short(addr), at: Date.now()} : (symHit || findToken());
+      if(!t) out = 'No genesis recorded yet. Stand by.';
+      else { await step('get_token', async () => t); openCert(t.contract); out = addr ? `Opening the genesis certificate for **${short(addr)}**.` : `Opening the genesis certificate for **${t.name}** (${padOf(t).name}), launched ${ago(t.at)}.`; }
+    } else if(intent === 'daily'){
+      await step('get_daily_report', async () => getJSON('/api/daily').catch(() => null));
+      openDaily(); out = `Opening **The 4663 Daily**: today's launches, graduations, flags and volume, compiled from live chain data and ready to post.`;
+    } else if(intent === 'about'){
+      out = `I'm the **OBSERV agent core**: I read Robinhood Chain live and can scan a token for threats ($SYMBOL or 0x…), decode a tx hash, show the hottest signals or anomalies, open genesis certificates, and compile The 4663 Daily. My stack isn't disclosed. I only observe, never advise.`;
+    } else if(intent === 'hello'){
+      const st = await step('get_live_stats', async () => toolStats({window_seconds:300}));
+      out = `GM. Uplink stable at block **${st.block != null ? fmt(st.block) : '—'}**: ${st.token_launches} launches and ${st.new_dex_pools} new pools in the last 5 min. Ask for the hottest signal, a threat scan, or paste a contract.`;
     } else {
       const st = await step('get_live_stats', async () => toolStats({window_seconds:300})); focusVisual({target:'core'});
       const fl = Object.entries(st.equity_flow_usd)[0];
-      out = `Trailing 5 min: **${st.token_launches} token launches** across ${PADS.length} launchpads, **${st.new_dex_pools} new pools**, **${st.graduations} graduations**${fl ? ', strongest equity flow ' + fl[0] + ' (+' + usd(fl[1]) + ')' : ''}. Network: **${st.tx_per_second_now != null ? fmt(st.tx_per_second_now) : '—'} tx/s**.`;
+      out = `Trailing 5 min: **${st.token_launches} token launches** across ${PADS.length} launchpads, **${st.new_dex_pools} new pools**, **${st.graduations} graduations**${fl ? `, strongest stock-token flow ${fl[0]} (+${usd(fl[1])})` : ''}. Try "hottest signal", "any anomalies" or paste a contract address.`;
     }
+    trace(`◇ synthesized in ${Math.round(performance.now() - t0)} ms`);
     await typeLine(askA, render(out), 9);
     return out;
   }
