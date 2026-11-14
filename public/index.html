@@ -2481,7 +2481,8 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
       genesis:  [/certificate|genesis|birth|akta|sertifikat|latest|newest|terbaru|new token|baru/, 2],
       daily:    [/daily|dispatch|report|laporan|harian|summary|ringkas|recap/, 2],
       about:    [/who are you|what are you|what can you|help|model|gpt|claude|llm|powered|siapa kamu|bisa apa|kemampuan/, 3],
-      hello:    [/^(hi|hello|hey|gm|halo|hai|yo|sup)\b/, 2],
+      hello:    [/^\W*(h+[ae]+l+o+w*|hel+o+|h[ae]+i+|hey+|hiya|hi+|gm+|gn|good (morning|afternoon|evening)|selamat (pagi|siang|sore|malam)|pagi|siang|sore|malam|assalamu?alaikum|salam|apa kabar|yo+|sup|wassup|howdy|ola|hola)\b/, 3],
+      thanks:   [/\b(thanks?|thank you|thx|ty|makasih|terima ?kasih|mantap|nice|great|keren|good job)\b/, 3],
     };
     let intent = 'overview', best = 0;
     for(const [k, [re, w]] of Object.entries(I)){ const m = s.match(new RegExp(re.source, 'g')); const sc = m ? m.length * w : 0; if(sc > best){ best = sc; intent = k; } }
@@ -2565,9 +2566,12 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
       openDaily(); out = `Opening **The 4663 Daily**: today's launches, graduations, flags and volume, compiled from live chain data and ready to post.`;
     } else if(intent === 'about'){
       out = `I'm the **OBSERV agent core**: I read Robinhood Chain live and can scan a token for threats ($SYMBOL or 0x…), decode a tx hash, show the hottest signals or anomalies, open genesis certificates, and compile The 4663 Daily. My stack isn't disclosed. I only observe, never advise.`;
+    } else if(intent === 'thanks'){
+      out = `Anytime. I'll keep watching the chain. Ask for the hottest signal, a threat scan, or paste a contract whenever you need it.`;
     } else if(intent === 'hello'){
       const st = await step('get_live_stats', async () => toolStats({window_seconds:300}));
-      out = `GM. Uplink stable at block **${st.block != null ? fmt(st.block) : '—'}**: ${st.token_launches} launches and ${st.new_dex_pools} new pools in the last 5 min. Ask for the hottest signal, a threat scan, or paste a contract.`;
+      const hr = new Date().getHours(), greet = hr < 11 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+      out = `${/^\W*gm/.test(s) ? 'GM' : greet}. ${st.block != null ? `Uplink stable at block **${fmt(st.block)}**: ${st.token_launches} launches and ${st.new_dex_pools} new pools in the last 5 min.` : 'Uplink is still warming up, live data lands in a few seconds.'} Ask for the hottest signal, a threat scan, or paste a contract.`;
     } else {
       const st = await step('get_live_stats', async () => toolStats({window_seconds:300})); focusVisual({target:'core'});
       const fl = Object.entries(st.equity_flow_usd)[0];
