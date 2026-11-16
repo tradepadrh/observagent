@@ -116,3 +116,19 @@ Skor adalah jumlah bobot (maksimal 100), dengan level LOW < 25 ≤ ELEVATED < 50
 ```bash
 node server.js          # http://localhost:8787
 ```
+
+
+## Holder Pass (utility token)
+
+Aktif otomatis begitu `TOKEN_CA` diisi. Holder klik **HOLDER PASS** → wallet menandatangani pesan teks gratis (tanpa transaksi, tanpa approve, tanpa gas) → server membaca saldo token via RPC → tier diberikan.
+
+| Tier | Saldo minimum (default) | Perk |
+|---|---|---|
+| OBSERVER | 1 | 15 pertanyaan agent/menit, budget harian khusus holder, deep rescan, watchlist 5 alamat |
+| ANALYST | 250.000 | 30/menit, deep rescan, watchlist 20 |
+| ORACLE | 1.000.000 | 60/menit, deep rescan, watchlist 50 |
+
+- Ubah ambang tier di `HOLDER_TIERS`. Isi `HOLDER_SECRET` (string acak panjang) supaya pass tidak hangus setiap redeploy.
+- Saldo dicek ulang tiap 10 menit, jadi kalau holder menjual, tiernya ikut turun.
+- **Deep rescan** (`/api/threat/<ca>?fresh=1`) sekarang khusus holder; pengunjung biasa tetap dapat hasil scan normal.
+- Pengunjung biasa tetap bisa memakai semua fitur gratis; Holder Pass hanya menambah batas dan fitur ekstra.

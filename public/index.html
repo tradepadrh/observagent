@@ -611,6 +611,11 @@
   .tklinks{display:flex;flex-wrap:wrap;gap:8px;padding:14px}
   .tklinks a{font-size:10.5px;font-weight:700;letter-spacing:.14em;border:1.5px solid var(--ink);padding:8px 10px;text-decoration:none;color:var(--ink)}
   .tklinks a:hover{background:var(--ink);color:var(--paper2)}
+  .tkutil{border:1.5px solid var(--ink);background:var(--ink);color:var(--paper2);padding:18px;display:flex;flex-direction:column;gap:12px}
+  .tku-h{font-size:10.5px;letter-spacing:.2em;font-weight:700}
+  .tkutil ul{list-style:none;font-size:12px;line-height:1.6;display:flex;flex-direction:column;gap:8px} .tkutil li b{display:block;font-size:11px;letter-spacing:.16em}
+  .tkutil button{align-self:flex-start;font-family:var(--mono);font-weight:700;font-size:10.5px;letter-spacing:.14em;border:1.5px solid var(--paper2);background:var(--paper2);color:var(--ink);padding:10px 12px;cursor:pointer}
+  .tkgrid .tkdisc{grid-column:1/-1}
   .tkdisc{font-size:11.5px;line-height:1.7;color:var(--ink2);border-left:3px solid var(--ink);padding:4px 0 4px 14px}
   .lbegin{text-align:center;padding-top:110px;padding-bottom:110px;display:flex;flex-direction:column;align-items:center;gap:18px}
   .lbegin p{font-size:13px;color:var(--ink2)}
@@ -637,6 +642,27 @@
     .lfoot{grid-template-columns:1fr} .lfoot nav{justify-content:flex-start}
   }
   .ask-tools .trace,#askTools .trace{display:block;flex-basis:100%;width:100%;font-size:9.5px;letter-spacing:.06em;color:var(--ink2);opacity:.85;border:0;background:none;padding:0;margin:0 0 2px}
+
+  /* ---------- HOLDER PASS ---------- */
+  .hbtn.hpass.on{background:var(--ink);color:var(--paper2)}
+  .hp-hero{border-bottom:1.5px solid var(--ink);padding-bottom:16px;margin-bottom:16px}
+  .hp-p{font-size:12px;line-height:1.65;color:var(--ink2);margin-top:10px;max-width:640px}
+  .hp-note{border:1.5px dashed var(--ink);padding:12px 14px;font-size:12px;line-height:1.6;margin-bottom:16px;background:repeating-linear-gradient(-45deg,rgba(0,0,0,.05) 0 6px,transparent 6px 12px)}
+  .hp-cta{width:100%;font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:.16em;background:var(--ink);color:var(--paper2);border:0;padding:16px;cursor:pointer;margin-bottom:16px}
+  .hp-cta:hover{background:#000}
+  .hp-me{display:flex;align-items:center;gap:14px;border:1.5px solid var(--ink);padding:12px 14px;margin-bottom:16px;background:var(--paper2)}
+  .hp-me b{font-size:15px;letter-spacing:.16em} .hp-me span{font-size:11.5px;color:var(--ink2)} .hp-me .chip{margin-left:auto}
+  .hp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .hp-tier{border:1.5px solid var(--ink);padding:12px;background:var(--paper2)}
+  .hp-tier.me{background:var(--ink);color:var(--paper2)}
+  .hp-tn{font-weight:700;letter-spacing:.16em;font-size:12.5px} .hp-tm{font-size:10.5px;opacity:.75;margin-top:4px}
+  .hp-tier ul{list-style:none;margin-top:10px;font-size:11px;line-height:1.75} .hp-tier li::before{content:"→ "}
+  .hp-sec{margin-top:20px;font-size:10.5px;letter-spacing:.2em;font-weight:700;border-top:1.5px solid var(--ink);padding-top:14px}
+  .hp-wf{display:flex;gap:8px;margin-top:10px} .hp-wf input{flex:1;min-width:0;font-family:var(--mono);font-size:13px;border:1.5px solid var(--ink);padding:9px 10px;background:#fff}
+  .hp-wl{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;font-size:11.5px} .hp-wl span{border:1px solid var(--ink);padding:4px 8px} .hp-wl button{border:0;background:none;cursor:pointer;font-size:11px;margin-left:4px}
+  .hp-wl em{color:var(--ink2);font-style:normal}
+  .hp-fine{margin-top:18px;font-size:10px;letter-spacing:.14em;color:var(--ink2)}
+  @media (max-width:640px){ .hp-grid{grid-template-columns:1fr} .hp-wf input{font-size:16px} }
 </style>
 </head>
 <body>
@@ -825,7 +851,7 @@ edition 135 · 2 launches
     <div><b data-count="chains">0</b><span>CHAIN LIVE · <em data-count="planned">0</em> PLANNED</span></div>
     <div><b data-count="signals">13</b><span>THREAT SIGNALS</span></div>
     <div><b data-count="ms">100</b><span>MS BLOCK TIME</span></div>
-    <div><b>0</b><span>WALLETS CONNECTED · READ-ONLY</span></div>
+    <div><b>0</b><span>TRANSACTIONS EVER REQUESTED</span></div>
   </section>
 
   <section class="ls" id="faq">
@@ -834,7 +860,8 @@ edition 135 · 2 launches
       <details open><summary>Is OBSERV free to use?</summary><p>Yes. The observatory, threat radar, genesis certificates and The 4663 Daily are free and need no sign-up. Agent questions have a fair-use limit per visitor.</p></details>
       <details><summary>Is anything here financial advice?</summary><p>No. OBSERV describes what happened on-chain. It never tells you to buy, sell or hold, and a low threat score does not mean a token is safe.</p></details>
       <details><summary>How is the threat score calculated?</summary><p>Each heuristic signal (sell blocked, creator exit, bundled genesis, top-10 concentration, clone names, fake volume and more) adds a weighted amount, capped at 100. Every signal is shown with the data behind it, and anything that couldn't be checked is listed as not evaluated.</p></details>
-      <details><summary>Does it connect to my wallet?</summary><p>Never. OBSERV is read-only: no wallet connection, no signatures, no approvals. If any site asks you to connect a wallet "for OBSERV", it isn't us.</p></details>
+      <details><summary>Does it touch my wallet?</summary><p>Never for transactions. The observatory works without any wallet. Holders can optionally verify with a free sign-in message to unlock Holder Pass perks. It never sends a transaction, never approves tokens and never moves funds. If anyone asks you to approve or send tokens "for OBSERV", it isn't us.</p></details>
+      <details><summary>What does the token unlock?</summary><p>The Holder Pass: higher Query Agent limits with a reserved daily budget, deep rescans of any token on demand, and a personal watchlist that alerts you when a token or creator wallet appears on-chain. Tiers follow your balance. Perks are product features, not financial returns.</p></details>
       <details><summary>Where does the data come from?</summary><p>Directly from Robinhood Chain RPC (blocks, logs, contract reads) and DexPaprika for pools and market data.</p></details>
       <details><summary>Which chains and launchpads are covered?</summary><p><span class="lpadlist">Robinhood Chain launchpads</span>. Elysium is next on the roadmap, followed by more chains. Open Coverage for the live map.</p></details>
     </div>
@@ -852,6 +879,7 @@ edition 135 · 2 launches
         </dl>
         <div class="tklinks" id="tkLinks"></div>
       </div>
+      <div class="tkutil"><div class="tku-h">HOLDER PASS · WHAT THE TOKEN UNLOCKS</div><ul><li><b>Agent priority</b> higher Query Agent limits + reserved daily budget</li><li><b>Deep rescan</b> force a fresh threat scan on any token</li><li><b>Watchlist</b> alerts when a token or creator wallet moves</li><li><b>Tiers</b> Observer → Analyst → Oracle, by balance</li></ul><button data-pass="1">OPEN HOLDER PASS ▸</button></div>
       <p class="tkdisc">Community token. Not affiliated with Robinhood Markets, Inc. Holding it gives no claim on revenue or profits and is not an investment contract. Nothing on this site is financial advice. Always verify the contract address above before interacting.</p>
     </div>
   </section>
@@ -1480,6 +1508,7 @@ edition 135 · 2 launches
     return t;
   }
   function ingest(ev, live = true){
+    if(live && window.__observWatch) try { window.__observWatch(ev); } catch(_){}
     const e = {at: Date.parse(ev.t) || Date.now(), raw: ev};
     if(ev.type === 'launch'){
       const t = tokenFrom(ev), pad = padOf(t); e.type = 'launch'; e.pad = t.pad; e.name = t.name;
@@ -1562,7 +1591,7 @@ edition 135 · 2 launches
   /* ---------- decoder: real tx decode + contract x-ray ---------- */
   const result = $('#result'), steps = $('#steps'), rb = $('#rb');
   $('#rClose').onclick = () => gsap.to(result, {x:30, opacity:0, duration:.25, onComplete(){ result.style.display = 'none'; }});
-  const getJSON = async (url) => { const r = await fetch(url); const j = await r.json().catch(() => ({})); if(!r.ok) throw new Error(j.error || 'HTTP ' + r.status); return j; };
+  const getJSON = async (url) => { const r = await fetch(url, {headers: (window.__passHeader ? window.__passHeader() : {})}); const j = await r.json().catch(() => ({})); if(!r.ok) throw new Error(j.error || 'HTTP ' + r.status); return j; };
   async function decode(input){
     input = (input||'').trim();
     const kind = /^0x[0-9a-fA-F]{40}$/.test(input) ? 'ct' : /^0x[0-9a-fA-F]{64}$/.test(input) ? 'tx' : input === '__sum' ? 'sum' : null;
@@ -1678,7 +1707,7 @@ edition 135 · 2 launches
         <div class="tgauge"><div class="sc">${th.score}</div><span class="lv ${th.score>=50?'hi':''}">${th.level} SIGNAL</span>
           <div class="segs">${Array.from({length:20},(_,i)=>`<i class="${i<on?'on':''}"></i>`).join('')}</div>
           <small>Score = weighted sum of detected signals, 0–100</small>
-          <button class="chip" id="rescan" style="margin-top:10px">RESCAN NOW</button></div>
+          <button class="chip" id="rescan" style="margin-top:10px">DEEP RESCAN ◉</button></div>
         <div class="tlist">
           <h5>SIGNALS DETECTED (${th.signals.length})</h5>
           ${th.signals.length ? th.signals.map(f => `<div class="f bad"><span class="ic">!</span><div><b>${esc(f.label)}</b><span>${esc(f.evidence)}</span></div><em>+${f.weight}</em></div>`).join('') : `<div class="f"><span class="ic">—</span><div><b>NO SIGNALS</b><span>No heuristic triggered at scan time.</span></div><em>0</em></div>`}
@@ -1791,7 +1820,7 @@ edition 135 · 2 launches
     openModal(`GENESIS / ${name}`, html,
       `📜 Genesis certificate: ${name} (${pad.name})\nContract: ${g.token}\n${th.block ? 'Block #' + fmt(th.block) + '\n' : ''}${m.holders != null ? 'Holders: ' + fmt(m.holders) + ' · top 10 ' + (m.top10Pct*100).toFixed(1) + '%\n' : ''}Threat signals: ${th.score}/100 (${th.level})${th.signals.length ? ' — ' + th.signals.map(s => s.label.toLowerCase()).join(', ') : ''}\n— via ${ENV.PROJECT_NAME} (heuristic on-chain data, not advice)`);
     drawFingerprint($('#fp'), g.token);
-    $('#rescan').onclick = async () => { $('#rescan').textContent = 'SCANNING…'; try { await getJSON(`/api/threat/${g.token}?fresh=1`); openCert(g.token); } catch(e){ toast(e.message); } };
+    $('#rescan').onclick = async () => { $('#rescan').textContent = 'SCANNING…'; try { await getJSON(`/api/threat/${g.token}?fresh=1`); openCert(g.token); } catch(e){ $('#rescan').textContent = 'DEEP RESCAN ◉'; if(/Holder Pass/.test(e.message)){ toast('Deep rescan is a Holder Pass perk.'); window.__openPass && window.__openPass(); } else toast(e.message); } };
     gsap.from('#sheet .cert .nm', {letterSpacing:'.4em', opacity:0, duration:1, ease:'power3.out', delay:.3});
     gsap.from('#sheet .fields > div', {opacity:0, x:-6, stagger:.02, duration:.3, delay:.45});
     gsap.from('#sheet .tgauge .sc', {textContent:0, duration:1.2, delay:.6, snap:{textContent:1}, ease:'power2.out'});
@@ -1998,6 +2027,7 @@ edition 135 · 2 launches
     land.querySelectorAll('[data-open]').forEach(b => b.onclick = () => toTop(() => { const t = $('#' + b.dataset.open); if(t) t.click(); }));
     land.querySelectorAll('[data-ask]').forEach(b => b.onclick = () => toTop(() => { const i = $('#askI'); if(i) i.focus(); }));
     land.querySelectorAll('[data-top]').forEach(b => b.onclick = () => toTop());
+    land.querySelectorAll('[data-pass]').forEach(b => b.onclick = () => window.__openPass && window.__openPass());
     // reveal + counters
     const COUNT = {pads: PADS.length, chains: LIVE_CHAINS.length, planned, signals: 13, ms: 100};
     land.querySelectorAll('.ls .lhead, .st, .cap, .faq details, .tkcard, .tkdisc, .lbegin > *').forEach(e => e.classList.add('rv'));
@@ -2048,6 +2078,78 @@ edition 135 · 2 launches
     // header: one entry to jump to the manual
     const nav = $('#hnav'); if(nav && !$('#bManual')){ const b = document.createElement('button'); b.className = 'hbtn'; b.id = 'bManual'; b.textContent = 'MANUAL ↓'; b.onclick = () => $('#how').scrollIntoView({behavior: 'smooth'}); nav.appendChild(b); }
   })();
+
+  // ===================== HOLDER PASS =====================
+  const PASS = {
+    get(){ try { return JSON.parse(localStorage.getItem('observ.pass') || 'null'); } catch(_){ return null; } },
+    set(v){ try { v ? localStorage.setItem('observ.pass', JSON.stringify(v)) : localStorage.removeItem('observ.pass'); } catch(_){} },
+    watch(){ try { return JSON.parse(localStorage.getItem('observ.watch') || '[]'); } catch(_){ return []; } },
+    setWatch(a){ try { localStorage.setItem('observ.watch', JSON.stringify(a)); } catch(_){} },
+  };
+  const passHeader = () => { const p = PASS.get(); return p && p.pass ? {'x-observ-pass': p.pass} : {}; };
+  const TIER_DESC = {OBSERVER: 'Entry tier', ANALYST: 'Power tier', ORACLE: 'Top tier'};
+  function passBadge(){
+    const b = $('#bPass'); if(!b) return; const p = PASS.get();
+    b.textContent = p && p.tier ? `◉ ${p.tier}` : 'HOLDER PASS'; b.classList.toggle('on', !!(p && p.tier));
+  }
+  async function refreshPass(){
+    const p = PASS.get(); if(!p || !p.pass) return passBadge();
+    try { const r = await (await fetch('/api/holder/me', {headers: passHeader()})).json();
+      if(r.holder){ PASS.set({...p, tier: r.tier, balance: r.balance, perks: r.perks}); } else { PASS.set(null); toast('Holder Pass expired or tier changed. Sign in again.'); } } catch(_){}
+    passBadge();
+  }
+  async function signIn(){
+    const eth = window.ethereum;
+    if(!eth) return toast('No wallet extension found. Open this page in a wallet browser or install a wallet extension.');
+    try {
+      const [address] = await eth.request({method: 'eth_requestAccounts'});
+      const ch = await getJSON(`/api/holder/challenge?address=${address}`);
+      const msgHex = '0x' + Array.from(new TextEncoder().encode(ch.message)).map(b => b.toString(16).padStart(2, '0')).join('');
+      const signature = await eth.request({method: 'personal_sign', params: [msgHex, address]});
+      const r = await fetch('/api/holder/verify', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({address, nonce: ch.nonce, signature})});
+      const j = await r.json(); if(!r.ok) throw new Error(j.error || 'verification failed');
+      if(!j.holder){ PASS.set(null); toast(`Verified ${short(address)} · balance ${fmt(j.balance)} · no tier yet.`); }
+      else { PASS.set({pass: j.pass, address: j.address, tier: j.tier, balance: j.balance, perks: j.perks}); toast(`Holder Pass active · ${j.tier}`); log(`agent.H01  holder pass ${j.tier} · ${short(j.address)}`, true); }
+      passBadge(); openPass();
+    } catch(e){ toast(e && e.code === 4001 ? 'Signature cancelled.' : (e.message || 'Sign-in failed.')); }
+  }
+  async function openPass(){
+    let info = {active: false, tiers: [], perks: {}}; try { info = await getJSON('/api/holder/info'); } catch(_){}
+    const p = PASS.get(), w = PASS.watch();
+    const tiers = info.tiers.map(t => { const pk = info.perks[t.name] || {}; const me = p && p.tier === t.name;
+      return `<div class="hp-tier ${me ? 'me' : ''}"><div class="hp-tn">${esc(t.name)}${me ? ' · YOU' : ''}</div><div class="hp-tm">≥ ${fmt(t.min)} tokens</div>
+        <ul><li>${pk.agentPerMinute || '—'} agent questions / min</li><li>Reserved daily agent budget</li><li>Deep rescan on demand</li><li>Watchlist · ${pk.watchlist || '—'} addresses</li></ul></div>`; }).join('');
+    const status = !info.active
+      ? `<div class="hp-note">Holder Pass activates at token launch. Perks below unlock automatically for holders, with no forms and no fees.</div>`
+      : p && p.tier
+        ? `<div class="hp-me"><b>◉ ${esc(p.tier)}</b><span>${short(p.address)} · ${fmt(p.balance)} tokens</span><button class="chip" id="hpOut">SIGN OUT</button></div>`
+        : `<button class="hp-cta" id="hpIn">VERIFY HOLDINGS ▸ FREE SIGNATURE</button>`;
+    const cap = p && p.perks ? p.perks.watchlist : 0;
+    const watch = p && p.tier ? `<div class="hp-sec">WATCHLIST · ${w.length}/${cap}</div>
+      <p class="hp-p">Add any token or creator wallet. When it shows up in the live feed or a threat scan, the observatory alerts you here.</p>
+      <form id="hpWForm" class="hp-wf"><input id="hpW" placeholder="0x… token or wallet" spellcheck="false"><button class="chip">ADD</button></form>
+      <div class="hp-wl">${w.map((a, i) => `<span>${short(a)} <button data-i="${i}" aria-label="Remove">✕</button></span>`).join('') || '<em>Nothing watched yet.</em>'}</div>` : '';
+    openModal('HOLDER PASS / TOKEN UTILITY', `
+      <div class="hp-hero"><div class="h" style="font-size:44px;line-height:.95">Hold the token.<br><span style="font-style:italic;font-weight:500">Unlock the observatory.</span></div>
+      <p class="hp-p">Holders verify with a free sign-in message. It never sends a transaction, never approves tokens and never moves funds. Your tier follows your balance and is re-checked every 10 minutes.</p></div>
+      ${status}<div class="hp-grid">${tiers}</div>${watch}
+      <div class="hp-fine">Perks are product features, not financial returns. Not financial advice.</div>`, '');
+    const i = $('#hpIn'); if(i) i.onclick = signIn;
+    const o = $('#hpOut'); if(o) o.onclick = () => { PASS.set(null); passBadge(); openPass(); };
+    const f = $('#hpWForm'); if(f) f.onsubmit = (e) => { e.preventDefault(); const v = $('#hpW').value.trim().toLowerCase(); const list = PASS.watch();
+      if(!/^0x[0-9a-f]{40}$/.test(v)) return toast('Paste a 0x address (40 hex characters).');
+      if(list.includes(v)) return toast('Already watched.'); if(list.length >= cap) return toast(`Your tier watches up to ${cap} addresses.`);
+      PASS.setWatch([...list, v]); openPass(); };
+    document.querySelectorAll('.hp-wl [data-i]').forEach(b => b.onclick = () => { const l = PASS.watch(); l.splice(+b.dataset.i, 1); PASS.setWatch(l); openPass(); });
+  }
+  // watchlist alerts on every live event
+  window.__observWatch = (ev) => {
+    const p = PASS.get(); if(!p || !p.tier) return; const w = PASS.watch(); if(!w.length) return;
+    const blob = JSON.stringify(ev).toLowerCase(), hit = w.find(a => blob.includes(a));
+    if(hit){ toast(`WATCHLIST HIT · ${short(hit)} · ${String(ev.type || 'event').toUpperCase()}`); log(`agent.W01  watchlist hit ${short(hit)} → ${ev.type}`, true); }
+  };
+  { const nav = $('#hnav'); if(nav && !$('#bPass')){ const b = document.createElement('button'); b.className = 'hbtn hpass'; b.id = 'bPass'; b.onclick = openPass; nav.insertBefore(b, nav.firstChild); } passBadge(); refreshPass(); }
+  window.__openPass = openPass; window.__passHeader = passHeader;
 
   // header
   $('#brand').textContent = clean(ENV.PROJECT_NAME) || 'OBSERV AGENT';
@@ -2445,7 +2547,7 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
     const tick = setInterval(() => { askA.innerHTML = '<span class="caret" style="background:var(--ink)"></span>'; }, 400);
     let j;
     try {
-      const r = await fetch('/api/ask', {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({q, history: AI.history})});
+      const r = await fetch('/api/ask', {method:'POST', headers:{'content-type':'application/json', ...(window.__passHeader ? window.__passHeader() : {})}, body: JSON.stringify({q, history: AI.history})});
       j = await r.json().catch(() => ({}));
       if(!r.ok){ const e = new Error(j.error || 'AI error'); e.fallback = !!j.fallback; throw e; }
     } finally { clearInterval(tick); }

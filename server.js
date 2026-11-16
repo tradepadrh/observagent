@@ -370,6 +370,8 @@ const AI_TOOLS = [
   { name: "get_project_info", description: "Official info about this project's own token and team: ticker, contract address or pre-launch status, links, developer.", input_schema: { type: "object", properties: {} }, run: () => projectInfo() },
 ];
 const ai = createAI(AI_TOOLS);
+const { createHolder } = require("./lib/holder");
+const holder = createHolder({ env, site: SITE });
 
 // ---------------------------------------------------------------- HTTP
 const PUB = path.join(__dirname, "public");
@@ -399,9 +401,23 @@ function heavyLimited(ip) {
 }
 const clientIp = (req) => String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "?").split(",")[0].trim();
 
+function routeScan(req, res, u, p, tail) {
+  if (p.startsWith("/api/genesis/")) { if (!isAddr(tail)) return send(res, 400, { error: "send a 0x contract address" }); return json(res, genesis(tail)); }
+  if (p.startsWith("/api/threat/")) { if (!isAddr(tail)) return send(res, 400, { error: "send a 0x contract address" }); return json(res, threat.scan(tail, { force: u.searchParams.get("fresh") === "1" })); }
+  if (p.startsWith("/api/tx/")) { if (!/^0x[0-9a-fA-F]{64}$/.test(tail)) return send(res, 400, { error: "send a 0x transaction hash (64 hex characters)" }); return json(res, decodeTx(lc(tail))); }
+  if (p.startsWith("/api/swaptest/")) { if (!isAddr(tail)) return send(res, 400, { error: "bad address" }); return json(res, swapTestToken(tail, Math.min(1e5, Math.max(1, +u.searchParams.get("usd") || 50)))); }
+  send(res, 404, { error: "not found" });
+}
+function holderRoute(req, res, u, p) {
+  if (p === "/api/holder/info") return send(res, 200, holder.info());
+  if (p === "/api/holder/challenge") { const r = holder.challenge(u.searchParams.get("address")); return send(res, r.error ? 400 : 200, r); }
+  if (p === "/api/holder/verify" && req.method === "POST") { readBody(req).then((b) => holder.verify(b)).then((r) => send(res, r.status, r.body)).catch((e) => send(res, 400, { error: String(e.message || e) })); return; }
+  if (p === "/api/holder/me") { holder.resolve(req).then((h) => send(res, 200, h ? { holder: true, ...h } : { holder: false })).catch(() => send(res, 200, { holder: false })); return; }
+  send(res, 404, { error: "not found" });
+}
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, "http://x"), p = u.pathname, tail = decodeURIComponent(p.split("/").pop() || "");
-  if (req.method === "OPTIONS") { res.writeHead(204, { "access-control-allow-origin": "*", "access-control-allow-methods": "GET,POST", "access-control-allow-headers": "content-type" }); return res.end(); }
+  if (req.method === "OPTIONS") { res.writeHead(204, { "access-control-allow-origin": "*", "access-control-allow-methods": "GET,POST", "access-control-allow-headers": "content-type, x-observ-pass" }); return res.end(); }
   if (p === "/api/health") return send(res, 200, { ok: !snapshot.error && !!snapshot.updatedAt, updatedAt: snapshot.updatedAt, pools: snapshot.pools.length, error: snapshot.error, block: stats.block, scanner: launchpads.status(), ai: ai.enabled(), clients: clients.size });
   if (p === "/api/config") return send(res, 200, { ...SITE(), AI_ENABLED: ai.enabled() });
   if (p === "/api/registry") return send(res, 200, registry.forWeb(launchpads.PADS));
@@ -414,16 +430,23 @@ const server = http.createServer((req, res) => {
   if (p === "/api/project") return send(res, 200, projectInfo());
   if (p === "/api/kit/context") return send(res, 200, contextPack());
   if (p === "/api/radar") { const pad = u.searchParams.get("pad"); return send(res, 200, threat.recent().filter((r) => !pad || pad === "all" || r.launchpad === pad).sort((a, b) => b.score - a.score).slice(0, 40).map(summary)); }
+  if (p.startsWith("/api/holder/")) return holderRoute(req, res, u, p);
+  if (/^\/api\/(genesis|threat|tx|swaptest)\//.test(p) && (req.headers["x-observ-pass"] || u.searchParams.get("fresh") === "1")) {
+    holder.resolve(req).then((h) => {
+      if (u.searchParams.get("fresh") === "1" && !(h && h.perks.deepRescan)) return send(res, 403, { error: "Deep rescan is a Holder Pass perk.", holderOnly: true });
+      if (!h && !threat.cached(tail) && heavyLimited(clientIp(req))) return send(res, 429, { error: "Too many scans — wait a minute." });
+      routeScan(req, res, u, p, tail);
+    }).catch((e) => send(res, 500, { error: String(e.message || e) }));
+    return;
+  }
   if (/^\/api\/(genesis|threat|tx|swaptest)\//.test(p) && !threat.cached(tail) && heavyLimited(clientIp(req))) return send(res, 429, { error: "Too many scans — wait a minute." });
-  if (p.startsWith("/api/genesis/")) { if (!isAddr(tail)) return send(res, 400, { error: "send a 0x contract address" }); return json(res, genesis(tail)); }
-  if (p.startsWith("/api/threat/")) { if (!isAddr(tail)) return send(res, 400, { error: "send a 0x contract address" }); return json(res, threat.scan(tail, { force: u.searchParams.get("fresh") === "1" })); }
-  if (p.startsWith("/api/tx/")) { if (!/^0x[0-9a-fA-F]{64}$/.test(tail)) return send(res, 400, { error: "send a 0x transaction hash (64 hex characters)" }); return json(res, decodeTx(lc(tail))); }
-  if (p.startsWith("/api/swaptest/")) { if (!isAddr(tail)) return send(res, 400, { error: "bad address" }); return json(res, swapTestToken(tail, Math.min(1e5, Math.max(1, +u.searchParams.get("usd") || 50)))); }
+  if (/^\/api\/(genesis|threat|tx|swaptest)\//.test(p)) return routeScan(req, res, u, p, tail);
   if (p === "/api/launchpads") return send(res, 200, launchpads.status());
   if (p === "/api/ask" && req.method === "POST") {
     readBody(req).then(async (b) => {
       const ctx = { official: { name: SITE().PROJECT_NAME }, padNames: registry.forWeb(launchpads.PADS).launchpads.filter((x) => !x.standby && x.id !== "dex").map((x) => x.name) };
-      const r = await ai.ask({ q: b.q, history: Array.isArray(b.history) ? b.history : [], ip: clientIp(req) }, ctx);
+      const h = await holder.resolve(req).catch(() => null);
+      const r = await ai.ask({ q: b.q, history: Array.isArray(b.history) ? b.history : [], ip: clientIp(req), holder: h }, ctx);
       send(res, r.status, r.body);
     }).catch((e) => send(res, 400, { error: String(e.message || e) }));
     return;
