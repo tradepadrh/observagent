@@ -124,9 +124,9 @@ Aktif otomatis begitu `TOKEN_CA` diisi. Holder klik **HOLDER PASS** → wallet m
 
 | Tier | Saldo minimum (default) | Perk |
 |---|---|---|
-| OBSERVER | 1 | 15 pertanyaan agent/menit, budget harian khusus holder, deep rescan, watchlist 5 alamat |
-| ANALYST | 250.000 | 30/menit, deep rescan, watchlist 20 |
-| ORACLE | 1.000.000 | 60/menit, deep rescan, watchlist 50 |
+| OBSERVER | 100.000 (0,01%) | 15 pertanyaan agent/menit, budget harian khusus holder, deep rescan, watchlist 5 alamat |
+| ANALYST | 1.000.000 (0,1%) | 30/menit, deep rescan, watchlist 20 |
+| ORACLE | 5.000.000 (0,5%) | 60/menit, deep rescan, watchlist 50 |
 
 - Ubah ambang tier di `HOLDER_TIERS`. Isi `HOLDER_SECRET` (string acak panjang) supaya pass tidak hangus setiap redeploy.
 - Saldo dicek ulang tiap 10 menit, jadi kalau holder menjual, tiernya ikut turun.
