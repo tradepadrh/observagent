@@ -645,6 +645,8 @@
 
   /* ---------- HOLDER PASS ---------- */
   .hbtn.hpass.on{background:var(--ink);color:var(--paper2)}
+  .hp-wrap{padding:22px 24px 20px}
+  .hp-hero .h{font-family:var(--narrow);font-weight:700;text-transform:none;letter-spacing:-.01em}
   .hp-hero{border-bottom:1.5px solid var(--ink);padding-bottom:16px;margin-bottom:16px}
   .hp-p{font-size:12px;line-height:1.65;color:var(--ink2);margin-top:10px;max-width:640px}
   .hp-note{border:1.5px dashed var(--ink);padding:12px 14px;font-size:12px;line-height:1.6;margin-bottom:16px;background:repeating-linear-gradient(-45deg,rgba(0,0,0,.05) 0 6px,transparent 6px 12px)}
@@ -2129,11 +2131,11 @@ edition 135 · 2 launches
       <p class="hp-p">Add any token or creator wallet. When it shows up in the live feed or a threat scan, the observatory alerts you here.</p>
       <form id="hpWForm" class="hp-wf"><input id="hpW" placeholder="0x… token or wallet" spellcheck="false"><button class="chip">ADD</button></form>
       <div class="hp-wl">${w.map((a, i) => `<span>${short(a)} <button data-i="${i}" aria-label="Remove">✕</button></span>`).join('') || '<em>Nothing watched yet.</em>'}</div>` : '';
-    openModal('HOLDER PASS / TOKEN UTILITY', `
+    openModal('HOLDER PASS / TOKEN UTILITY', `<div class="hp-wrap">
       <div class="hp-hero"><div class="h" style="font-size:44px;line-height:.95">Hold the token.<br><span style="font-style:italic;font-weight:500">Unlock the observatory.</span></div>
       <p class="hp-p">Holders verify with a free sign-in message. It never sends a transaction, never approves tokens and never moves funds. Your tier follows your balance and is re-checked every 10 minutes.</p></div>
       ${status}<div class="hp-grid">${tiers}</div>${watch}
-      <div class="hp-fine">Perks are product features, not financial returns. Not financial advice.</div>`, '');
+      <div class="hp-fine">Perks are product features, not financial returns. Not financial advice.</div></div>`, '');
     const i = $('#hpIn'); if(i) i.onclick = signIn;
     const o = $('#hpOut'); if(o) o.onclick = () => { PASS.set(null); passBadge(); openPass(); };
     const f = $('#hpWForm'); if(f) f.onsubmit = (e) => { e.preventDefault(); const v = $('#hpW').value.trim().toLowerCase(); const list = PASS.watch();
@@ -2708,15 +2710,16 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
     .to(planet.position, {x:pX, duration:1.8, ease:'power3.out'}, .2)
     .from(bandGroup.rotation, {z:-.6, duration:2, ease:'power3.out'}, .2)
     .to(core.scale, {x:cs, y:cs, z:cs, duration:1.4, ease:'expo.out'}, .6)
-    .from('#cTL', {opacity:0, duration:.6}, 1.2)
-    .call(() => {
-      boot();
+    .from('#cTL', {opacity:0, duration:.6}, 1.2);
+  // data boot never waits on the intro animation (background tabs pause animations)
+  boot();
+  setTimeout(() => {
       setInterval(agentsTick, 400);
       setInterval(() => pulse(CR+3, CR+22, .35), 1200);
       setInterval(refresh, 5000);
       narrate(); setInterval(narrate, 6000);
       if(location.hash === '#agent-kit') setTimeout(() => enterKit(), 1200);
-    }, null, 1.3);
+    }, 1300);
 })();
 </script>
 </body>
