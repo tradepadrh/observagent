@@ -45,6 +45,8 @@ const SITE = () => ({
   WEBSITE_URL: env("WEBSITE_URL"),
   DEV_NAME: env("DEV_NAME"),
   DEV_X: env("DEV_X"),
+  DEV_WALLET: env("DEV_WALLET"),
+  BURN_TX: env("BURN_TX"),
   DEV_ROLE: env("DEV_ROLE", "Founder · Builder"),
   DEV_BIO: env("DEV_BIO", "Building autonomous on-chain intelligence for Robinhood Chain."),
   SITE_URL: env("SITE_URL").replace(/\/$/, ""),
@@ -352,9 +354,37 @@ function dailyReport() {
   const scans = threat.recent().filter((r) => Date.parse(r.scannedAt) > Date.parse(daily.since));
   return { ...daily, market: m, flagged: scans.filter((r) => r.score >= 50).length, scanned: scans.length, note: "Event counts cover the time this server has been watching today; market figures are DexPaprika 24h values." };
 }
+
+// ---- Trust panel: dev wallet + burned supply, read live from the token contract ----
+const DEAD = ["0x000000000000000000000000000000000000dead", "0x0000000000000000000000000000000000000000"];
+let trustCache = { at: 0, data: null, key: "" };
+async function trustInfo() {
+  const s = SITE(), ca = isAddr(s.TOKEN_CA) ? s.TOKEN_CA.toLowerCase() : null, dev = isAddr(s.DEV_WALLET) ? s.DEV_WALLET.toLowerCase() : null;
+  const key = `${ca}|${dev}|${s.BURN_TX}`;
+  if (!ca) return { active: false };
+  if (trustCache.data && trustCache.key === key && Date.now() - trustCache.at < 60e3) return trustCache.data;
+  const call = (data) => swaptest.rpc("eth_call", [{ to: ca, data }, "latest"]);
+  const bal = (a) => call("0x70a08231" + a.slice(2).padStart(64, "0")).then((r) => BigInt(r && r !== "0x" ? r : "0x0"));
+  const [decRaw, supRaw] = await Promise.all([call("0x313ce567").catch(() => "0x12"), call("0x18160ddd")]);
+  const dec = BigInt(Number(BigInt(decRaw || "0x12"))), unit = 10n ** dec, supply = BigInt(supRaw || "0x0");
+  const burnedRaw = (await Promise.all(DEAD.map(bal))).reduce((a, b) => a + b, 0n);
+  const devRaw = dev ? await bal(dev) : null;
+  const whole = (v) => Number(v / unit) + Number(v % unit) / Number(unit);
+  const pct = (v) => supply > 0n ? Number((v * 1000000n) / supply) / 10000 : 0;
+  const tx = /^0x[0-9a-fA-F]{64}$/.test(String(s.BURN_TX || "").trim()) ? String(s.BURN_TX).trim() : null;
+  const data = {
+    active: true, token: ca, supply: whole(supply),
+    burned: whole(burnedRaw), burned_pct: pct(burnedRaw),
+    dev_wallet: dev, dev_balance: devRaw === null ? null : whole(devRaw), dev_pct: devRaw === null ? null : pct(devRaw),
+    burn_tx: tx, explorer: s.EXPLORER_URL, checked_at: new Date().toISOString(),
+  };
+  trustCache = { at: Date.now(), data, key };
+  return data;
+}
+setTimeout(() => trustInfo().catch(() => {}), 3000); setInterval(() => trustInfo().catch(() => {}), 60000);
 function projectInfo() {
   const s = SITE(), ca = isAddr(s.TOKEN_CA) ? s.TOKEN_CA : null;
-  return { project: s.PROJECT_NAME, ticker: s.TOKEN_TICKER, status: ca ? "live" : "pre-launch", contract_address: ca, chain: s.CHAIN_NAME, chain_id: s.CHAIN_ID, launchpad: s.LAUNCHPAD_NAME, launchpad_url: s.LAUNCHPAD_URL || null, explorer_url: ca ? `${s.EXPLORER_URL}/token/${ca}` : null, project_x: s.PROJECT_X ? "@" + s.PROJECT_X.replace(/^@/, "") : null, developer: { name: s.DEV_NAME || null, x: s.DEV_X ? "@" + s.DEV_X.replace(/^@/, "") : null, role: s.DEV_ROLE || null }, telegram: s.TELEGRAM_URL || null, website: s.WEBSITE_URL || null };
+  return { trust: trustCache.data && trustCache.data.active ? { dev_wallet: trustCache.data.dev_wallet, dev_balance: trustCache.data.dev_balance, burned: trustCache.data.burned, burned_pct: trustCache.data.burned_pct, burn_tx: trustCache.data.burn_tx } : null, project: s.PROJECT_NAME, ticker: s.TOKEN_TICKER, status: ca ? "live" : "pre-launch", contract_address: ca, chain: s.CHAIN_NAME, chain_id: s.CHAIN_ID, launchpad: s.LAUNCHPAD_NAME, launchpad_url: s.LAUNCHPAD_URL || null, explorer_url: ca ? `${s.EXPLORER_URL}/token/${ca}` : null, project_x: s.PROJECT_X ? "@" + s.PROJECT_X.replace(/^@/, "") : null, developer: { name: s.DEV_NAME || null, x: s.DEV_X ? "@" + s.DEV_X.replace(/^@/, "") : null, role: s.DEV_ROLE || null }, telegram: s.TELEGRAM_URL || null, website: s.WEBSITE_URL || null };
 }
 function contextPack() {
   return { source: SITE().PROJECT_NAME, kind: "live snapshot", generated_at: new Date().toISOString(), network: { chain: SITE().CHAIN_NAME, chain_id: SITE().CHAIN_ID, ...publicStats() }, stats_5m: liveStats(300), latest_geneses: recentTokens(12).map((t) => ({ token: t.sym, contract: t.token, launchpad: t.padName, created: t.created, threat_score: t.threat ? t.threat.score : null, threat_level: t.threat ? t.threat.level : "not scanned yet", signals: t.threat ? t.threat.signals : [] })), coverage: coverage().launchpads.filter((p) => !p.standby).map((p) => ({ launchpad: p.name, geneses_5m: p.geneses5m, tracked: p.tracked })), official_project: projectInfo() };
@@ -428,6 +458,7 @@ const server = http.createServer((req, res) => {
   if (p === "/api/coverage") return send(res, 200, coverage());
   if (p === "/api/daily") return send(res, 200, dailyReport());
   if (p === "/api/project") return send(res, 200, projectInfo());
+  if (p === "/api/trust") { trustInfo().then((d) => send(res, 200, d)).catch((e) => send(res, 200, { active: false, error: String(e.message || e) })); return; }
   if (p === "/api/kit/context") return send(res, 200, contextPack());
   if (p === "/api/radar") { const pad = u.searchParams.get("pad"); return send(res, 200, threat.recent().filter((r) => !pad || pad === "all" || r.launchpad === pad).sort((a, b) => b.score - a.score).slice(0, 40).map(summary)); }
   if (p.startsWith("/api/holder/")) return holderRoute(req, res, u, p);

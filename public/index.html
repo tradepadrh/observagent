@@ -665,6 +665,26 @@
   .hp-wl em{color:var(--ink2);font-style:normal}
   .hp-fine{margin-top:18px;font-size:10px;letter-spacing:.14em;color:var(--ink2)}
   @media (max-width:640px){ .hp-grid{grid-template-columns:1fr} .hp-wf input{font-size:16px} }
+
+  /* ---------- TRUST PANEL (dev wallet + burn, live from chain) ---------- */
+  .cabar .trust{border:0;border-left:1.5px solid var(--ink);background:var(--ink);color:var(--paper2);font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;padding:0 14px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:8px}
+  .cabar .trust:hover{background:#000}
+  .cabar .trust i{width:7px;height:7px;background:var(--paper2);border-radius:50%;animation:blink 1.4s steps(1) infinite}
+  .tp-wrap{padding:22px 24px}
+  .tp-big{display:grid;grid-template-columns:1fr 1fr;border:1.5px solid var(--ink)}
+  .tp-big>div{padding:16px 18px} .tp-big>div:first-child{border-right:1.5px solid var(--ink)}
+  .tp-big small{display:block;font-size:10px;letter-spacing:.2em;color:var(--ink2)}
+  .tp-big b{display:block;font-family:var(--narrow);font-size:52px;line-height:1;margin-top:6px}
+  .tp-big em{font-style:normal;font-size:11px;letter-spacing:.14em}
+  .tp-rows{margin-top:14px;border:1.5px solid var(--ink)}
+  .tp-rows div{display:grid;grid-template-columns:150px 1fr;border-bottom:1px solid rgba(0,0,0,.2);font-size:12px}
+  .tp-rows div:last-child{border-bottom:0}
+  .tp-rows span{padding:10px 12px;background:var(--ink);color:var(--paper2);font-size:10px;letter-spacing:.18em}
+  .tp-rows code{padding:10px 12px;word-break:break-all;font-family:var(--mono)}
+  .tp-rows a{color:inherit}
+  .tp-note{margin-top:12px;font-size:11px;line-height:1.6;color:var(--ink2)}
+  @media (max-width:900px){ .cabar .trust{font-size:9.5px;padding:0 10px;letter-spacing:.08em} }
+  @media (max-width:640px){ .cabar .trust .tl{display:none} .tp-big{grid-template-columns:1fr} .tp-big>div:first-child{border-right:0;border-bottom:1.5px solid var(--ink)} .tp-rows div{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -697,6 +717,7 @@
   <div class="ca-k">CA</div>
   <div class="addr pending" id="caAddr" title="Click to copy the official contract address"><code id="caCode">0x — awaiting genesis</code></div>
   <div class="stt2" id="caStt"><i></i>PRE-LAUNCH</div>
+  <button class="trust" id="caTrust" hidden title="Dev wallet and burned supply, read live from the token contract"></button>
   <a id="caExp" href="#" target="_blank" rel="noopener noreferrer" style="display:none">VERIFY ↗</a>
   <button id="caCopy" disabled>COPY CA</button>
 </div>
@@ -2153,6 +2174,46 @@ edition 135 · 2 launches
   { const nav = $('#hnav'); if(nav && !$('#bPass')){ const b = document.createElement('button'); b.className = 'hbtn hpass'; b.id = 'bPass'; b.onclick = openPass; nav.insertBefore(b, nav.firstChild); } passBadge(); refreshPass(); }
   window.__openPass = openPass; window.__passHeader = passHeader;
 
+  // ===================== TRUST PANEL =====================
+  (() => {
+    const btn = $('#caTrust'); if(!btn) return;
+    const fmtN = (n) => n == null ? '—' : n >= 1e6 ? (n/1e6).toFixed(2) + 'M' : n >= 1e3 ? (n/1e3).toFixed(1) + 'K' : (Math.round(n*100)/100).toString();
+    const fmtFull = (n) => n == null ? '—' : Math.round(n).toLocaleString('en-US');
+    let T = null;
+    async function load(){
+      try { T = await getJSON('/api/trust'); } catch(_){ return; }
+      if(!T || !T.active){ btn.hidden = true; return; }
+      const dev = T.dev_wallet ? `<span class="tl">DEV WALLET </span>${fmtN(T.dev_balance)}` : '';
+      btn.innerHTML = `<i></i>${dev}${dev ? ' · ' : ''}🔥 ${T.burned_pct.toFixed(2)}%<span class="tl"> BURNED</span>`;
+      btn.hidden = false;
+      const tl = document.querySelector('#land .tkcard dl');
+      if(tl && !tl.querySelector('.trow')){
+        tl.insertAdjacentHTML('beforeend', `<dt class="trow">DEV WALLET</dt><dd class="trow" id="tkDev"></dd><dt class="trow">BURNED</dt><dd class="trow" id="tkBurn"></dd>`);
+      }
+      const d = $('#tkDev'), b = $('#tkBurn');
+      if(d) d.innerHTML = T.dev_wallet ? `${fmtFull(T.dev_balance)} tokens · <a href="${esc(T.explorer)}/address/${esc(T.dev_wallet)}" target="_blank" rel="noopener">${short(T.dev_wallet)} ↗</a>` : 'not published';
+      if(b) b.innerHTML = `${fmtFull(T.burned)} (${T.burned_pct.toFixed(2)}%)${T.burn_tx ? ` · <a href="${esc(T.explorer)}/tx/${esc(T.burn_tx)}" target="_blank" rel="noopener">burn tx ↗</a>` : ''}`;
+    }
+    btn.onclick = () => {
+      if(!T) return;
+      const ex = esc(T.explorer);
+      openModal('TRUST PANEL / LIVE FROM THE TOKEN CONTRACT', `<div class="tp-wrap">
+        <div class="tp-big">
+          <div><small>DEV WALLET HOLDS</small><b>${T.dev_wallet ? fmtFull(T.dev_balance) : '—'}</b><em>${T.dev_wallet ? (T.dev_balance === 0 ? 'EMPTY · NOTHING LEFT TO SELL' : (T.dev_pct || 0).toFixed(2) + '% OF SUPPLY') : 'NOT PUBLISHED'}</em></div>
+          <div><small>BURNED (DEAD ADDRESSES)</small><b>${fmtFull(T.burned)}</b><em>${T.burned_pct.toFixed(2)}% OF ${fmtFull(T.supply)}</em></div>
+        </div>
+        <div class="tp-rows">
+          ${T.dev_wallet ? `<div><span>DEV WALLET</span><code><a href="${ex}/address/${esc(T.dev_wallet)}" target="_blank" rel="noopener">${esc(T.dev_wallet)} ↗</a></code></div>` : ''}
+          ${T.burn_tx ? `<div><span>BURN TX</span><code><a href="${ex}/tx/${esc(T.burn_tx)}" target="_blank" rel="noopener">${esc(T.burn_tx)} ↗</a></code></div>` : ''}
+          <div><span>TOKEN</span><code><a href="${ex}/token/${esc(T.token)}" target="_blank" rel="noopener">${esc(T.token)} ↗</a></code></div>
+          <div><span>CHECKED</span><code>${new Date(T.checked_at).toLocaleString('en-GB')} · refreshes every 60s</code></div>
+        </div>
+        <div class="tp-note">Balances are read directly from the token contract on Robinhood Chain, not typed in by the team. Burned = tokens held by 0x…dEaD and 0x0, which can never be moved. Don't trust, verify. Not financial advice.</div>
+      </div>`, '');
+    };
+    load(); setInterval(load, 60000);
+  })();
+
   // header
   $('#brand').textContent = clean(ENV.PROJECT_NAME) || 'OBSERV AGENT';
   $('#caTick').textContent = TICKER;
@@ -2506,7 +2567,7 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
     {name:'get_coverage', description:'Chains and launchpads watched, with genesis and flagged counts.', method:'GET', path:'/api/coverage', inputSchema:{type:'object', properties:{}}},
     {name:'get_daily_report', description:'Today\'s aggregated dispatch (The 4663 Daily).', method:'GET', path:'/api/daily', inputSchema:{type:'object', properties:{}}},
   ];
-  const LABEL = {get_threat_radar:'sweep threat radar', decode_transaction:'decode transaction', get_daily_report:'compile dispatch', get_live_stats:'pull telemetry', get_recent_events:'scan event stream', get_token:'read genesis record', get_project_info:'read official registry', get_coverage:'map coverage', scan_token_risk:'run threat scan', focus_visual:'redirect optics', open_view:'open view'};
+  const LABEL = {read_trust_panel:'read trust panel', get_threat_radar:'sweep threat radar', decode_transaction:'decode transaction', get_daily_report:'compile dispatch', get_live_stats:'pull telemetry', get_recent_events:'scan event stream', get_token:'read genesis record', get_project_info:'read official registry', get_coverage:'map coverage', scan_token_risk:'run threat scan', focus_visual:'redirect optics', open_view:'open view'};
 
   const askEl = $('#ask'), askOut = $('#askOut'), askA = $('#askA'), askTools = $('#askTools');
   function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -2573,6 +2634,7 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
     const symHit = symTok && symTok.name.replace('$','').toUpperCase() === symM[1].toUpperCase() ? symTok : null;
     // intent scoring: weighted keyword hits, best score wins
     const I = {
+      trust:    [/dev wallet|dev hold|team wallet|team token|burn|burned|dead address|can the dev|dev sell|dev dump|rug pull/, 4],
       project:  [/\bca\b|contract address|your token|\$observ|developer|\bdev\b|founder|official|twitter|\bx account|telegram|website/, 3],
       threat:   [/threat|danger|risk|rug|scam|honeypot|safe|bahaya|berbahaya|aman|penipuan|flag|suspicious|careful|hati/, 2],
       hot:      [/hot|hottest|trending|active|busiest|top|leader|ramai|rame|populer|signal right now|what.?s happening|lagi apa/, 2],
@@ -2607,7 +2669,11 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
       ? `Threat scan on **$${sc.symbol}** (${sc.launchpadName || 'DEX'}): score **${sc.score}/100 (${sc.level})**. Strongest signals: ${sc.signals.slice(0,3).map(x => x.label.toLowerCase() + ' — ' + String(x.evidence).replace(/\.$/, '')).join('; ')}. Heuristic flags, not a verdict.`
       : `Threat scan on **$${sc.symbol}**: score **0/100**. No heuristic signals triggered at scan time. No signals does not mean safe.`;
 
-    if(intent === 'project'){
+    if(intent === 'trust'){
+      const T = await step('read_trust_panel', () => getJSON('/api/trust'));
+      if(!T || !T.active) out = 'The token contract is not published yet, so there is nothing to check on-chain.';
+      else out = `Read live from the token contract: the dev wallet ${T.dev_wallet ? `holds **${Math.round(T.dev_balance).toLocaleString('en-US')}** tokens${T.dev_balance === 0 ? ', so there is nothing left to sell' : ''}` : 'is not published'}. **${Math.round(T.burned).toLocaleString('en-US')}** tokens (**${T.burned_pct.toFixed(2)}%** of supply) sit in dead addresses and can never move.${T.burn_tx ? ' The burn tx is linked in the Trust Panel.' : ''} Tap the 🔥 badge in the CA bar to verify.`;
+    } else if(intent === 'project'){
       const pi = await step('get_project_info', () => getJSON('/api/project')); openToken();
       out = pi.contract_address
         ? `Official ${pi.ticker} contract: **${pi.contract_address}** on ${pi.chain} (${pi.chain_id}).${pi.developer && pi.developer.x ? ' Developer: **' + pi.developer.x + '**.' : ''} Always verify the CA here before interacting.`
