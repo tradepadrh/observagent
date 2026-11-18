@@ -224,6 +224,13 @@
     .hbtn{padding:0 9px;letter-spacing:.06em}
   }
 
+  .vcard{padding:4px 0 8px}
+  .vprev{border:1.5px solid var(--ink);background:var(--paper2);display:flex;align-items:center;justify-content:center;min-height:240px}
+  .vprev img{display:block;width:100%;max-width:560px;height:auto}
+  .vact{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .vact .vx{background:var(--ink);color:var(--paper2)}
+  .vnote{font-size:10.5px;color:var(--dim);letter-spacing:.04em;margin-top:10px;line-height:1.5}
+  .tgauge .vshare{background:var(--ink);color:var(--paper2)}
   /* threat */
   .tag.threat{background:repeating-linear-gradient(-45deg,#121212 0 6px,#2b2b2b 6px 12px);outline:2px solid var(--ink);outline-offset:2px;animation:tflash 1s steps(1) 3}
   .tag.threat small{color:#e0ded7}
@@ -1730,7 +1737,7 @@ edition 135 · 2 launches
         <div class="tgauge"><div class="sc">${th.score}</div><span class="lv ${th.score>=50?'hi':''}">${th.level} SIGNAL</span>
           <div class="segs">${Array.from({length:20},(_,i)=>`<i class="${i<on?'on':''}"></i>`).join('')}</div>
           <small>Score = weighted sum of detected signals, 0–100</small>
-          <button class="chip" id="rescan" style="margin-top:10px">DEEP RESCAN ◉</button></div>
+          <button class="chip" id="rescan" style="margin-top:10px">DEEP RESCAN ◉</button><button class="chip vshare" id="vShare" style="margin-top:6px">SHARE VERDICT ▸</button></div>
         <div class="tlist">
           <h5>SIGNALS DETECTED (${th.signals.length})</h5>
           ${th.signals.length ? th.signals.map(f => `<div class="f bad"><span class="ic">!</span><div><b>${esc(f.label)}</b><span>${esc(f.evidence)}</span></div><em>+${f.weight}</em></div>`).join('') : `<div class="f"><span class="ic">—</span><div><b>NO SIGNALS</b><span>No heuristic triggered at scan time.</span></div><em>0</em></div>`}
@@ -1843,6 +1850,7 @@ edition 135 · 2 launches
     openModal(`GENESIS / ${name}`, html,
       `📜 Genesis certificate: ${name} (${pad.name})\nContract: ${g.token}\n${th.block ? 'Block #' + fmt(th.block) + '\n' : ''}${m.holders != null ? 'Holders: ' + fmt(m.holders) + ' · top 10 ' + (m.top10Pct*100).toFixed(1) + '%\n' : ''}Threat signals: ${th.score}/100 (${th.level})${th.signals.length ? ' — ' + th.signals.map(s => s.label.toLowerCase()).join(', ') : ''}\n— via ${ENV.PROJECT_NAME} (heuristic on-chain data, not advice)`);
     drawFingerprint($('#fp'), g.token);
+    $('#vShare').onclick = () => openVerdict(g);
     $('#rescan').onclick = async () => { $('#rescan').textContent = 'SCANNING…'; try { await getJSON(`/api/threat/${g.token}?fresh=1`); openCert(g.token); } catch(e){ $('#rescan').textContent = 'DEEP RESCAN ◉'; if(/Holder Pass/.test(e.message)){ toast('Deep rescan is a Holder Pass perk.'); window.__openPass && window.__openPass(); } else toast(e.message); } };
     gsap.from('#sheet .cert .nm', {letterSpacing:'.4em', opacity:0, duration:1, ease:'power3.out', delay:.3});
     gsap.from('#sheet .fields > div', {opacity:0, x:-6, stagger:.02, duration:.3, delay:.45});
@@ -1853,6 +1861,113 @@ edition 135 · 2 launches
     const t = tokById.get(g.token); if(t){ t.threat = {token:g.token, symbol:th.symbol, launchpad:th.launchpad, score:th.score, level:th.level, top: th.signals[0] && th.signals[0].label, signals: th.signals.map(s => s.label)}; refreshThreat(); }
   }
   $('#bCert').onclick = () => { const last = S.tokens[S.tokens.length-1]; openCert(last && last.contract); };
+
+  /* ---------- VERDICT CARD: 1080×1080 shareable image of a threat scan ---------- */
+  const siteUrl = () => (ENV.SITE_URL || ENV.WEBSITE_URL || location.origin).replace(/\/$/, '');
+  function verdictLink(ca){ return siteUrl() + '/#scan=' + ca; }
+  async function drawVerdict(g){
+    try { await Promise.all(["700 120px 'IBM Plex Mono'","400 24px 'IBM Plex Mono'","700 80px 'Archivo Narrow'"].map(f => document.fonts.load(f))); } catch(_){}
+    const th = g.threat, m = th.metrics || {}, W = 1080, P = 64;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = W;
+    const x = cv.getContext('2d'), INK = '#121212', PAPER = '#e8e6e0', DIM = '#77756f';
+    const MONO = "'IBM Plex Mono', ui-monospace, monospace", NAR = "'Archivo Narrow', sans-serif";
+    const f = (w, sz, fam = MONO) => x.font = `${w} ${sz}px ${fam}`;
+    const fit = (txt, max) => { let t = String(txt); while(t.length > 1 && x.measureText(t).width > max) t = t.slice(0, -2) + '…'; return t; };
+    x.fillStyle = PAPER; x.fillRect(0, 0, W, W);
+    // faint grid
+    x.strokeStyle = 'rgba(18,18,18,.06)'; x.lineWidth = 1;
+    for(let i = 0; i <= W; i += 40){ x.beginPath(); x.moveTo(i, 0); x.lineTo(i, W); x.stroke(); x.beginPath(); x.moveTo(0, i); x.lineTo(W, i); x.stroke(); }
+    // frame
+    x.strokeStyle = INK; x.lineWidth = 4; x.strokeRect(24, 24, W - 48, W - 48);
+    // header bar
+    x.fillStyle = INK; x.fillRect(24, 24, W - 48, 72);
+    x.fillStyle = PAPER; f(700, 26, NAR); x.textBaseline = 'middle';
+    x.fillText('OBSERV AGENT  ·  THREAT VERDICT', P, 60);
+    f(500, 18); x.textAlign = 'right'; x.fillText(`${(ENV.CHAIN_NAME || 'ROBINHOOD CHAIN').toUpperCase()} · ${ENV.CHAIN_ID || 4663}`, W - P, 60); x.textAlign = 'left';
+    // token identity
+    const pad = PAD_BY[th.launchpad] || {name:'DEX'};
+    x.textBaseline = 'alphabetic'; x.fillStyle = INK;
+    f(700, 96, NAR); x.fillText(fit('$' + (th.symbol || '?'), 660), P, 210);
+    f(400, 24); x.fillStyle = INK; x.fillText(fit((th.name || 'Unnamed token') + '  ·  ' + pad.name, 660), P, 252);
+    f(400, 20); x.fillStyle = DIM; x.fillText(g.token, P, 286);
+    // stamp
+    x.save(); x.translate(W - P - 110, 210); x.rotate(-0.12);
+    x.strokeStyle = INK; x.lineWidth = 4; x.strokeRect(-106, -62, 212, 124); x.lineWidth = 1.5; x.strokeRect(-98, -54, 196, 108);
+    x.fillStyle = INK; x.textAlign = 'center';
+    const shrink = (t, w, sz, fam, y) => { while(sz > 10){ f(w, sz, fam); if(x.measureText(t).width <= 176) break; sz--; } x.fillText(t, 0, y); };
+    shrink('VERIFIED SCAN', 700, 30, NAR, -8); shrink('A05 VERIFIER · ON-CHAIN', 500, 15, MONO, 20); f(500, 15); x.fillText(new Date(th.scannedAt || Date.now()).toISOString().slice(0, 10), 0, 42);
+    x.restore(); x.textAlign = 'left';
+    // score block
+    const sy = 340, hi = th.score >= 50;
+    x.fillStyle = INK; x.fillRect(P, sy, 400, 300);
+    x.fillStyle = PAPER; f(500, 18); x.fillText('THREAT SCORE', P + 28, sy + 44);
+    let fs = 168; f(700, fs); f(500, 34); const dw = x.measureText('/100').width;
+    f(700, fs); while(fs > 80 && x.measureText(String(th.score)).width + dw + 14 > 348){ fs -= 6; f(700, fs); }
+    x.fillText(String(th.score), P + 22, sy + 210);
+    const sw = x.measureText(String(th.score)).width; f(500, 34); x.fillText('/100', P + 30 + sw, sy + 210);
+    f(700, 26, NAR); x.fillText(`${th.level} SIGNAL`, P + 28, sy + 262);
+    // 20-seg meter
+    const on = Math.round(th.score / 5);
+    for(let i = 0; i < 20; i++){ x.fillStyle = i < on ? INK : 'rgba(18,18,18,.14)'; x.fillRect(P + i * 20, sy + 318, 16, 26); }
+    if(hi){ x.fillStyle = PAPER; f(700, 22); x.textAlign = 'right'; x.fillText('⚠', P + 372, sy + 46); x.textAlign = 'left'; }
+    // signals list
+    const lx = P + 440, lw = W - P - lx; let ly = sy + 22;
+    x.fillStyle = INK; f(700, 18); x.fillText(th.signals.length ? `SIGNALS DETECTED (${th.signals.length})` : 'NO SIGNALS DETECTED', lx, ly); ly += 14;
+    x.fillRect(lx, ly, lw, 2); ly += 38;
+    const rows = th.signals.length ? th.signals.slice(0, 5).map(s => ['!', s.label, '+' + s.weight]) : (th.checks || []).slice(0, 5).map(c => ['✓', c, '']);
+    for(const [ic, lab, w] of rows){
+      x.fillStyle = INK; x.fillRect(lx, ly - 24, 30, 30); x.fillStyle = PAPER; f(700, 20); x.textAlign = 'center'; x.fillText(ic, lx + 15, ly - 2); x.textAlign = 'left';
+      x.fillStyle = INK; f(500, 21); x.fillText(fit(String(lab).toUpperCase(), lw - 110), lx + 44, ly - 2);
+      if(w){ f(700, 21); x.textAlign = 'right'; x.fillText(w, lx + lw, ly - 2); x.textAlign = 'left'; }
+      ly += 52;
+    }
+    if(th.signals.length > 5){ f(400, 18); x.fillStyle = DIM; x.fillText(`+${th.signals.length - 5} more on observagent.tech`, lx + 44, ly - 4); }
+    // metrics strip
+    const my = 720, cells = [
+      ['HOLDERS', m.holders != null ? (m.partialHistory ? '≥' : '') + fmt(m.holders) : '—'],
+      ['TOP 10 HOLD', m.top10Pct != null ? (m.top10Pct * 100).toFixed(1) + '%' : '—'],
+      ['LIQUIDITY', m.liquidityUsd != null ? usd(m.liquidityUsd) : 'NO POOL'],
+      ['SWAP TEST', m.swapTest ? String(m.swapTest.verdict).toUpperCase() : 'NOT RUN']];
+    const cw = (W - 2 * P) / 4;
+    x.strokeStyle = INK; x.lineWidth = 2; x.strokeRect(P, my, W - 2 * P, 124);
+    cells.forEach(([k, v], i) => {
+      const cx = P + i * cw; if(i){ x.beginPath(); x.moveTo(cx, my); x.lineTo(cx, my + 124); x.stroke(); }
+      x.fillStyle = DIM; f(500, 17); x.fillText(k, cx + 22, my + 42);
+      x.fillStyle = INK; f(700, 34); x.fillText(fit(v, cw - 40), cx + 22, my + 96);
+    });
+    // footer
+    x.fillStyle = INK; x.fillRect(24, W - 168, W - 48, 144);
+    x.fillStyle = PAPER; f(700, 40, NAR); x.fillText('SCAN ANY TOKEN → ' + siteUrl().replace(/^https?:\/\//, '').toUpperCase(), P, W - 104);
+    f(400, 18); x.fillStyle = '#b9b7b0';
+    const when = new Date(th.scannedAt || Date.now());
+    x.fillText(`Scanned ${when.toISOString().slice(0, 16).replace('T', ' ')} UTC · heuristic on-chain signals · not financial advice`, P, W - 62);
+    return cv;
+  }
+  let lastCert = null;
+  async function openVerdict(g){
+    lastCert = g;
+    const th = g.threat, PXh = handle(ENV.PROJECT_X);
+    const text = `OBSERV verdict on $${th.symbol || '?'}: ${th.score}/100 · ${th.level} threat signals${th.signals[0] ? ' (' + th.signals[0].label.toLowerCase() + ')' : ''}.\n\nScan any Robinhood Chain token before you ape 👇\n${verdictLink(g.token)}${PXh ? '\n\nvia @' + PXh : ''}`;
+    openModal(`VERDICT / $${th.symbol || '?'}`, `<div class="vcard"><div class="vprev"><div class="lead">Rendering verdict card…</div></div>
+      <div class="vact"><button class="chip" id="vBack">◂ CERTIFICATE</button><button class="chip" id="vDl">DOWNLOAD PNG</button><button class="chip vx" id="vPost">POST ON 𝕏 ▸</button><button class="chip" id="vLink">COPY LINK</button></div>
+      <p class="vnote">On phone, POST shares the image directly. On desktop the PNG downloads first, then attach it to the post that opens.</p></div>`, text);
+    $('#vBack').onclick = () => renderCert(g);
+    let cv; try { cv = await drawVerdict(g); } catch(e){ $('.vprev').innerHTML = `<div class="lead">⚠ ${esc(e.message)}</div>`; return; }
+    const url = cv.toDataURL('image/png'), fname = `observ-verdict-${(th.symbol || 'token').replace(/[^\w-]/g, '')}.png`;
+    $('.vprev').innerHTML = `<img src="${url}" alt="Verdict card for $${esc(th.symbol || '?')}">`;
+    const dl = () => { const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove(); };
+    $('#vDl').onclick = dl;
+    $('#vLink').onclick = async () => { try { await navigator.clipboard.writeText(verdictLink(g.token)); toast('Link copied'); } catch(_){ toast(verdictLink(g.token)); } };
+    $('#vPost').onclick = async () => {
+      try {
+        const blob = await new Promise(r => cv.toBlob(r, 'image/png')), file = new File([blob], fname, {type:'image/png'});
+        if(navigator.canShare && navigator.canShare({files:[file]}) && matchMedia('(pointer:coarse)').matches){ await navigator.share({files:[file], text}); return; }
+      } catch(e){ if(e && e.name === 'AbortError') return; }
+      dl(); toast('Card saved — attach it to your post');
+      window.open('https://x.com/intent/tweet?text=' + encodeURIComponent(text), '_blank', 'noopener');
+    };
+  }
+  window.__openVerdict = openVerdict;
 
   /* ---------- THE 4663 DAILY (/api/daily) ---------- */
   async function openDaily(){
@@ -2763,7 +2878,7 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
     $('#askSpeak').textContent = '⏹ STOP'; speechSynthesis.speak(u);
   };
 
-  addEventListener('hashchange', () => { if(location.hash === '#agent-kit') enterKit(); else if(S.kit) exitKit(); });
+  addEventListener('hashchange', () => { const sm = location.hash.match(/^#scan=(0x[0-9a-fA-F]{40})$/); if(sm){ openCert(sm[1].toLowerCase()); return; } if(location.hash === '#agent-kit') enterKit(); else if(S.kit) exitKit(); });
   /* ---------- intro ---------- */
   layout(); loop();
   const pX = planet.position.x;
@@ -2785,6 +2900,7 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
       setInterval(refresh, 5000);
       narrate(); setInterval(narrate, 6000);
       if(location.hash === '#agent-kit') setTimeout(() => enterKit(), 1200);
+      const sm = location.hash.match(/^#scan=(0x[0-9a-fA-F]{40})$/); if(sm) setTimeout(() => openCert(sm[1].toLowerCase()), 900);
     }, 1300);
 })();
 </script>
