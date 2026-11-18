@@ -210,6 +210,8 @@
   .ph .h{padding:10px 12px;border-bottom:1px solid var(--ink)}
   .ph .h small{font-size:9px;letter-spacing:.18em;color:var(--ink2)}
   .ph .h b{display:block;font-family:var(--narrow);font-size:20px;margin-top:2px}
+  .ph .h .eta{display:block;font-style:normal;font-size:9px;letter-spacing:.12em;margin-top:5px;color:var(--ink2)}
+  .ph.now .h .eta{color:#d8d6cf}
   .ph.now .h{background:var(--ink);color:var(--paper2)} .ph.now .h small{color:#a9a7a0}
   .ph ul{list-style:none;padding:10px 12px;display:grid;gap:10px}
   .ph li{font-size:11px;line-height:1.5}
@@ -2054,29 +2056,29 @@ edition 135 · 2 launches
   /* ---------- ROADMAP ---------- */
   function openRoadmap(){
     const P = [
-      {k:'PHASE 01 · MVP', t:'Genesis Protocol', now:true, items:[
-        ['OBSERV AGENT live','Real-time Robinhood Chain visualization with a neural narrator','IN DEVELOPMENT',1],
-        ['Decoder & Contract X-Ray','Transactions and contracts translated into human language','IN DEVELOPMENT',1],
-        ['Genesis Certificate','A shareable birth record for every token, on every tracked launchpad','IN DEVELOPMENT',1],
-        ['Multi-launchpad scanning', PADS.map(p=>p.name).join(', '),'IN DEVELOPMENT',1],
-        ['The 4663 Daily','An autonomous daily dispatch in broadsheet form','IN DEVELOPMENT',1],
-        ['Threat Scanner & Radar','Heuristic danger signals on every genesis, with evidence','IN DEVELOPMENT',1]]},
-      {k:'PHASE 02', t:'Holder Uplink', items:[
-        ['Watchlist alerts','Track addresses/contracts; AI-explained alerts via Telegram (holders only)','PLANNED'],
-        ['Token-gated tiers','Decode & alert quotas scaled to holding value','PLANNED'],
-        ['Transparency dashboard','Creator-fee inflow vs. server & AI compute costs','PLANNED']]},
-      {k:'PHASE 03', t:'Knowledge Layer', items:[
-        ['Wallet X-Ray','Educational behavioral profile of any public wallet','PLANNED'],
-        ['Learn mode & glossary','Tap any term — the agent explains it in plain language','PLANNED']]},
-      {k:'PHASE 04', t:'RWA Intelligence', items:[
-        ['Stock Token Peg Monitor','On-chain vs. underlying equity price spread, as pure data','RESEARCH'],
-        ['Archive & public API','Historical OBSERV AGENT data for other builders','RESEARCH']]},
-      {k:'PHASE 05', t:'Multi-Chain', items: REG.chains.filter(c => c.status !== 'live').sort((a,b) => (b.priority?1:0) - (a.priority?1:0)).map(c => { const lp = REG.launchpads.filter(p => p.chain === c.id).map(p => p.name); return [c.name + (c.priority ? ' — NEXT' : ''), (c.note || '') + (lp.length ? ' · launchpads: ' + lp.join(', ') : '') + ' — same agent, scanner & certificates', c.priority ? 'NEXT UP' : c.status === 'planned' ? 'PLANNED' : 'RESEARCH', c.priority ? 1 : 0]; })},
+      {k:'PHASE 01 · LIVE', t:'Genesis Protocol', eta:'SHIPPED · NOV 2026', now:true, items:[
+        ['OBSERV AGENT live','Real-time Robinhood Chain visualization with a neural narrator','LIVE',1],
+        ['Decoder & Contract X-Ray','Transactions and contracts translated into human language','LIVE',1],
+        ['Genesis Certificate & Threat Radar','Birth record + heuristic danger signals for every token, with evidence','LIVE',1],
+        ['Holder Pass','Wallet-verified tiers: higher agent limits, deep rescan','LIVE',1],
+        ['Trust Panel & Verdict Cards','Dev wallet + burn read live from the contract; shareable scan cards','LIVE',1]]},
+      {k:'PHASE 02', t:'Holder Uplink', eta:'EST. LATE NOV – DEC 2026', items:[
+        ['Shipped log','Public changelog of every release, dated','EST. LATE NOV'],
+        ['Watchlist alerts','Track tokens/creator wallets; alerts on web + Telegram (holders)','EST. EARLY DEC'],
+        ['Weekly Threat Report','Riskiest launches and new scam patterns, every week','EST. DEC'],
+        ['Transparency dashboard','Creator-fee inflow vs. server, RPC & AI costs','EST. MID–LATE DEC']]},
+      {k:'PHASE 03', t:'Knowledge Layer', eta:'EST. JAN 2027', items:[
+        ['Wallet X-Ray','Educational behavioral profile of any public wallet','EST. JAN'],
+        ['Learn mode & glossary','Tap any term — the agent explains it in plain language','EST. JAN']]},
+      {k:'PHASE 04', t:'RWA Intelligence', eta:'EST. FEB – MAR 2027', items:[
+        ['Stock Token Peg Monitor','On-chain vs. underlying equity price spread, as pure data','EST. FEB'],
+        ['Archive & public API','Historical OBSERV AGENT data for other builders','EST. MAR']]},
+      {k:'PHASE 05', t:'Multi-Chain', eta:'EST. Q2 2027 · RESEARCH', items: REG.chains.filter(c => c.status !== 'live').sort((a,b) => (b.priority?1:0) - (a.priority?1:0)).map(c => { const lp = REG.launchpads.filter(p => p.chain === c.id).map(p => p.name); return [c.name + (c.priority ? ' — NEXT' : ''), (c.note || '') + (lp.length ? ' · launchpads: ' + lp.join(', ') : '') + ' — same agent, scanner & certificates', c.priority ? 'NEXT UP' : c.status === 'planned' ? 'PLANNED' : 'RESEARCH', c.priority ? 1 : 0]; })},
     ];
     const html = `<div class="rm">
       <h2>ROADMAP</h2>
-      <div class="lead">Every module is read-only: no custody of funds, no buy/sell signals. Sequence and timing subject to change.</div>
-      <div class="phases">${P.map(p => `<div class="ph ${p.now?'now':''}"><div class="h"><small>${p.k}</small><b>${p.t}</b></div>
+      <div class="lead">Dates are estimates: some items may land earlier, some later. We'd rather ship it right than ship it on a date. Every module is read-only: no custody of funds, no buy/sell signals.</div>
+      <div class="phases">${P.map(p => `<div class="ph ${p.now?'now':''}"><div class="h"><small>${p.k}</small><b>${p.t}</b>${p.eta ? `<em class="eta">${p.eta}</em>` : ''}</div>
         <ul>${p.items.map(([b,s,st,on]) => `<li><b>${b}</b><span>${s}</span><br><span class="st ${on?'on':''}">${st}</span></li>`).join('')}</ul></div>`).join('')}</div>
     </div>`;
     openModal('ROADMAP / OBSERV AGENT', html, '');
