@@ -2275,7 +2275,7 @@ edition 135 · 2 launches
       const signature = await eth.request({method: 'personal_sign', params: [msgHex, address]});
       const r = await fetch('/api/holder/verify', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({address, nonce: ch.nonce, signature})});
       const j = await r.json(); if(!r.ok) throw new Error(j.error || 'verification failed');
-      if(!j.holder){ PASS.set(null); toast(`Verified ${short(address)} · balance ${fmt(j.balance)} · no tier yet.`); }
+      if(!j.holder){ PASS.set(null); const need = j.tiers && j.tiers[0] ? j.tiers[0].min : 0; toast(`${short(address)} holds ${fmt(j.balance)} tokens · ${need ? fmt(Math.max(0, need - j.balance)) + ' more to reach ' + j.tiers[0].name : 'no tier yet'}. Just bought? Wait a few seconds and verify again.`); }
       else { PASS.set({pass: j.pass, address: j.address, tier: j.tier, balance: j.balance, perks: j.perks}); toast(`Holder Pass active · ${j.tier}`); log(`agent.H01  holder pass ${j.tier} · ${short(j.address)}`, true); }
       passBadge(); openPass();
     } catch(e){ toast(e && e.code === 4001 ? 'Signature cancelled.' : (e.message || 'Sign-in failed.')); }
