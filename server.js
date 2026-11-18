@@ -10,6 +10,7 @@ const launchpads = require("./lib/launchpads");
 const registry = require("./lib/registry");
 const { createThreat } = require("./lib/threat");
 const { createAI } = require("./lib/ai");
+const { createWatch } = require("./lib/watch");
 
 const env = (k, d = "") => (process.env[k] == null || process.env[k] === "" ? d : process.env[k]);
 const CFG = {
@@ -175,6 +176,7 @@ function pushEvent(type, data) {
   if (feed.length > 400) feed.pop();
   countDaily(ev);
   broadcast("event", ev);
+  try { watch && watch.onEvent(ev); } catch (_) {}
   return ev;
 }
 const within = (ms) => feed.filter((e) => Date.now() - Date.parse(e.t) < ms);
@@ -216,6 +218,7 @@ function pump() {
     const a = queue.shift(); running++;
     threat.scan(a).then((r) => {
       broadcast("scan", summary(r));
+      try { watch.onScan(summary(r)); } catch (_) {}
       if (r.score >= 50) pushEvent("threat", { ...summary(r), evidence: r.signals[0] && r.signals[0].evidence });
     }).catch((e) => console.warn("threat scan", a, e.message)).finally(() => { running--; queued.delete(a); pump(); });
   }
@@ -402,6 +405,8 @@ const AI_TOOLS = [
 const ai = createAI(AI_TOOLS);
 const { createHolder } = require("./lib/holder");
 const holder = createHolder({ env, site: SITE });
+const watch = createWatch({ env, rpc: swaptest.rpc, keccak256: swaptest.keccak256, launchpads, threat, holder, site: SITE });
+watch.start();
 
 // ---------------------------------------------------------------- HTTP
 const PUB = path.join(__dirname, "public");
@@ -438,6 +443,16 @@ function routeScan(req, res, u, p, tail) {
   if (p.startsWith("/api/swaptest/")) { if (!isAddr(tail)) return send(res, 400, { error: "bad address" }); return json(res, swapTestToken(tail, Math.min(1e5, Math.max(1, +u.searchParams.get("usd") || 50)))); }
   send(res, 404, { error: "not found" });
 }
+function watchRoute(req, res, u, p) {
+  holder.resolve(req).then(async (h) => {
+    if (!h || !h.tier) return send(res, 401, { error: "Watchlist alerts are a Holder Pass perk. Verify your holdings first.", holderOnly: true });
+    if (p === "/api/watch" && req.method === "GET") return send(res, 200, watch.view(h.address, h));
+    if (p === "/api/watch" && req.method === "POST") { const b = await readBody(req); const r = watch.setItems(h.address, h, b.items); return send(res, r.error ? 400 : 200, r); }
+    if (p === "/api/watch/telegram" && req.method === "POST") { const r = watch.telegramLink(h.address); return send(res, r.error ? 400 : 200, r); }
+    if (p === "/api/watch/telegram/unlink" && req.method === "POST") return send(res, 200, watch.telegramUnlink(h.address));
+    send(res, 404, { error: "not found" });
+  }).catch((e) => send(res, 400, { error: String(e.message || e) }));
+}
 function holderRoute(req, res, u, p) {
   if (p === "/api/holder/info") return send(res, 200, holder.info());
   if (p === "/api/holder/challenge") { const r = holder.challenge(u.searchParams.get("address")); return send(res, r.error ? 400 : 200, r); }
@@ -448,7 +463,7 @@ function holderRoute(req, res, u, p) {
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, "http://x"), p = u.pathname, tail = decodeURIComponent(p.split("/").pop() || "");
   if (req.method === "OPTIONS") { res.writeHead(204, { "access-control-allow-origin": "*", "access-control-allow-methods": "GET,POST", "access-control-allow-headers": "content-type, x-observ-pass" }); return res.end(); }
-  if (p === "/api/health") return send(res, 200, { ok: !snapshot.error && !!snapshot.updatedAt, updatedAt: snapshot.updatedAt, pools: snapshot.pools.length, error: snapshot.error, block: stats.block, scanner: launchpads.status(), ai: ai.enabled(), clients: clients.size });
+  if (p === "/api/health") return send(res, 200, { ok: !snapshot.error && !!snapshot.updatedAt, updatedAt: snapshot.updatedAt, pools: snapshot.pools.length, error: snapshot.error, block: stats.block, scanner: launchpads.status(), ai: ai.enabled(), clients: clients.size, watch: watch.status() });
   if (p === "/api/config") return send(res, 200, { ...SITE(), AI_ENABLED: ai.enabled() });
   if (p === "/api/registry") return send(res, 200, registry.forWeb(launchpads.PADS));
   if (p === "/api/state") return send(res, 200, { stats: publicStats(), market: marketSummary(), feed: feed.slice(0, 80), tokens: recentTokens(60), updatedAt: snapshot.updatedAt });
@@ -462,6 +477,7 @@ const server = http.createServer((req, res) => {
   if (p === "/api/kit/context") return send(res, 200, contextPack());
   if (p === "/api/radar") { const pad = u.searchParams.get("pad"); return send(res, 200, threat.recent().filter((r) => !pad || pad === "all" || r.launchpad === pad).sort((a, b) => b.score - a.score).slice(0, 40).map(summary)); }
   if (p.startsWith("/api/holder/")) return holderRoute(req, res, u, p);
+  if (p === "/api/watch" || p.startsWith("/api/watch/")) return watchRoute(req, res, u, p);
   if (/^\/api\/(genesis|threat|tx|swaptest)\//.test(p) && (req.headers["x-observ-pass"] || u.searchParams.get("fresh") === "1")) {
     holder.resolve(req).then((h) => {
       if (u.searchParams.get("fresh") === "1" && !(h && h.perks.deepRescan)) return send(res, 403, { error: "Deep rescan is a Holder Pass perk.", holderOnly: true });
