@@ -233,6 +233,7 @@
   .vact .vx{background:var(--ink);color:var(--paper2)}
   .vnote{font-size:10.5px;color:var(--dim);letter-spacing:.04em;margin-top:10px;line-height:1.5}
   .tgauge .vshare{background:var(--ink);color:var(--paper2)}
+  .cm-chip{background:var(--ink);color:var(--paper2)}
   .hp-live{font-style:normal;font-size:9px;letter-spacing:.14em;color:var(--dim);margin-left:8px}
   .hp-wl a{color:inherit}
   .hp-tg{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 4px}
@@ -1680,9 +1681,10 @@ edition 135 · 2 launches
         const th = g.threat, m = th.metrics || {};
         await typeLine(p, `<b>${esc(th.symbol || '?')}</b>${th.name ? ' (' + esc(th.name) + ')' : ''} — ${th.launchpadName ? 'launched via <b>' + esc(th.launchpadName) + '</b>' : 'no known launchpad'}. Threat score <b>${th.score}/100 (${th.level})</b>${th.signals[0] ? ': ' + esc(th.signals[0].evidence) : '.'}`, 8);
         rb.insertAdjacentHTML('beforeend', `<div class="kv"><div>ADDRESS</div><div>${short(g.token)}</div><div>HOLDERS</div><div>${m.holders != null ? (m.partialHistory ? '≥ ' : '') + fmt(m.holders) : '—'}</div><div>TOP-10 SHARE</div><div>${m.top10Pct != null ? (m.top10Pct*100).toFixed(1) + '%' : '—'}</div><div>CREATOR</div><div>${m.deployer ? short(m.deployer) + (m.creatorPct != null ? ' · ' + (m.creatorPct*100).toFixed(1) + '%' : '') : '—'}</div><div>SWAP TEST</div><div>${m.swapTest ? m.swapTest.verdict + ' · ' + m.swapTest.lossPct + '% round trip' : 'not run'}</div><div>LIQUIDITY</div><div>${m.liquidityUsd != null ? usd(m.liquidityUsd) : '—'}</div><div>SIGNALS</div><div><b>${th.signals.length}</b> detected</div></div>
-          <div style="margin-top:10px"><button class="chip" id="xrayCert">OPEN GENESIS CERTIFICATE ▸</button></div>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="chip" id="xrayCert">OPEN GENESIS CERTIFICATE ▸</button><button class="chip cm-chip" id="xrayCluster">CLUSTER MAP ◈</button></div>
           <div class="warn">${esc(th.disclaimer)}</div>`);
         $('#xrayCert').onclick = () => openCert(g.token);
+        $('#xrayCluster').onclick = () => window.__openCluster && window.__openCluster(g.token);
       } else {
         const d = await getJSON('/api/stats?window=300'); okAll();
         const pads = Object.entries(d.launches_by_launchpad).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `${k} ${v}`).join(', ') || 'none';
@@ -1766,7 +1768,7 @@ edition 135 · 2 launches
         <div class="tgauge"><div class="sc">${th.score}</div><span class="lv ${th.score>=50?'hi':''}">${th.level} SIGNAL</span>
           <div class="segs">${Array.from({length:20},(_,i)=>`<i class="${i<on?'on':''}"></i>`).join('')}</div>
           <small>Score = weighted sum of detected signals, 0–100</small>
-          <button class="chip" id="rescan" style="margin-top:10px">DEEP RESCAN ◉</button><button class="chip vshare" id="vShare" style="margin-top:6px">SHARE VERDICT ▸</button></div>
+          <button class="chip" id="rescan" style="margin-top:10px">DEEP RESCAN ◉</button><button class="chip vshare" id="vShare" style="margin-top:6px">SHARE VERDICT ▸</button><button class="chip" id="vCluster" style="margin-top:6px">CLUSTER MAP ◈</button></div>
         <div class="tlist">
           <h5>SIGNALS DETECTED (${th.signals.length})</h5>
           ${th.signals.length ? th.signals.map(f => `<div class="f bad"><span class="ic">!</span><div><b>${esc(f.label)}</b><span>${esc(f.evidence)}</span></div><em>+${f.weight}</em></div>`).join('') : `<div class="f"><span class="ic">—</span><div><b>NO SIGNALS</b><span>No heuristic triggered at scan time.</span></div><em>0</em></div>`}
@@ -1880,6 +1882,7 @@ edition 135 · 2 launches
       `📜 Genesis certificate: ${name} (${pad.name})\nContract: ${g.token}\n${th.block ? 'Block #' + fmt(th.block) + '\n' : ''}${m.holders != null ? 'Holders: ' + fmt(m.holders) + ' · top 10 ' + (m.top10Pct*100).toFixed(1) + '%\n' : ''}Threat signals: ${th.score}/100 (${th.level})${th.signals.length ? ' — ' + th.signals.map(s => s.label.toLowerCase()).join(', ') : ''}\n— via ${ENV.PROJECT_NAME} (heuristic on-chain data, not advice)`);
     drawFingerprint($('#fp'), g.token);
     $('#vShare').onclick = () => openVerdict(g);
+    $('#vCluster').onclick = () => { closeModal && closeModal(); window.__openCluster && window.__openCluster(g.token); };
     $('#rescan').onclick = async () => { $('#rescan').textContent = 'SCANNING…'; try { await getJSON(`/api/threat/${g.token}?fresh=1`); openCert(g.token); } catch(e){ $('#rescan').textContent = 'DEEP RESCAN ◉'; if(/Holder Pass/.test(e.message)){ toast('Deep rescan is a Holder Pass perk.'); window.__openPass && window.__openPass(); } else toast(e.message); } };
     gsap.from('#sheet .cert .nm', {letterSpacing:'.4em', opacity:0, duration:1, ease:'power3.out', delay:.3});
     gsap.from('#sheet .fields > div', {opacity:0, x:-6, stagger:.02, duration:.3, delay:.45});
@@ -1997,6 +2000,7 @@ edition 135 · 2 launches
     };
   }
   window.__openVerdict = openVerdict;
+  window.__toast = toast; window.__openCert = (ca) => openCert(ca);
 
   /* ---------- THE 4663 DAILY (/api/daily) ---------- */
   async function openDaily(){
@@ -2081,6 +2085,7 @@ edition 135 · 2 launches
         ['Weekly Threat Report','Riskiest launches and new scam patterns, every week','EST. NOV 25'],
         ['Transparency dashboard','Creator-fee inflow vs. server, RPC & AI costs','EST. NOV 25']]},
       {k:'PHASE 03 · WEEK 2', t:'Knowledge Layer', eta:'EST. NOV 26 – DEC 2', items:[
+        ['Cluster Map','3D map of linked wallets around any token: shared funders, same-block buys, creator transfers','LIVE · NOV 19',1],
         ['Wallet X-Ray','Educational behavioral profile of any public wallet','EST. NOV 29'],
         ['Learn mode & glossary','Tap any term — the agent explains it in plain language','EST. DEC 2']]},
       {k:'PHASE 04 · WEEK 3', t:'RWA Intelligence', eta:'EST. DEC 3 – 9', items:[
@@ -2984,6 +2989,337 @@ Fetch live JSON (GET, no key): ${TOOLS.map(t => '`' + API + t.path + '`').join('
     }, 1300);
 })();
 </script>
+<!-- ===================== CLUSTER MAP (3D wireframe) ===================== -->
+<section id="cmap" aria-label="Cluster map" hidden>
+  <div class="cm-top">
+    <div class="cm-title"><b>CLUSTER MAP</b><span id="cmSym">/ —</span></div>
+    <div class="cm-steps" id="cmSteps"></div>
+    <div class="cm-actions"><button id="cmLink" class="cm-btn">COPY LINK</button><button id="cmX" class="cm-btn">[ CLOSE ]</button></div>
+  </div>
+  <canvas id="cmGl"></canvas>
+  <div class="cm-tip" id="cmTip" hidden></div>
+  <aside class="cm-side" id="cmSide">
+    <div class="cm-k">VERDICT</div>
+    <div class="cm-verdict" id="cmVerdict">Mapping…</div>
+    <div class="cm-stats" id="cmStats"></div>
+    <div class="cm-k">LINKED GROUPS <em>tap to isolate</em></div>
+    <div class="cm-list" id="cmList"></div>
+    <div class="cm-k">LEGEND</div>
+    <div class="cm-legend">
+      <span><i class="lg-tok"></i>TOKEN</span><span><i class="lg-cr"></i>CREATOR</span><span><i class="lg-w"></i>HOLDER</span>
+      <span><i class="lg-hot"></i>LINKED</span><span><i class="lg-f"></i>FUNDER</span><span><i class="lg-b"></i>SAME BLOCK</span>
+      <span><i class="lg-x"></i>EXITED</span><span><i class="lg-in"></i>CONTRACT</span>
+    </div>
+    <p class="cm-note" id="cmNote">Heuristic map from public on-chain data. Linked is not proof of one owner.</p>
+  </aside>
+  <div class="cm-hint">DRAG TO ORBIT · SCROLL / PINCH TO ZOOM · HOVER A NODE</div>
+</section>
+<style>
+  #cmap{position:fixed;inset:0;z-index:80;background:#0b0b0b;color:#e8e6e0;font-family:var(--mono);overflow:hidden}
+  #cmap[hidden]{display:none}
+  #cmap::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px)}
+  #cmGl{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+  #cmGl.drag{cursor:grabbing}
+  .cm-top{position:absolute;left:0;right:0;top:0;height:52px;display:flex;align-items:center;gap:18px;padding:0 18px;border-bottom:1px solid rgba(232,230,224,.25);background:rgba(11,11,11,.82);z-index:3}
+  .cm-title{font-family:var(--narrow);font-size:20px;letter-spacing:.1em;white-space:nowrap}
+  .cm-title b{font-weight:700}.cm-title span{margin-left:10px;color:#a9a7a0}
+  .cm-steps{flex:1;display:flex;gap:14px;font-size:10px;letter-spacing:.14em;color:#77756f;overflow:hidden;white-space:nowrap}
+  .cm-steps span.on{color:#e8e6e0}.cm-steps span.ok::before{content:"✓ ";color:#e8e6e0}
+  .cm-actions{display:flex;gap:8px}
+  .cm-btn{background:transparent;color:#e8e6e0;border:1px solid rgba(232,230,224,.55);font:inherit;font-size:10.5px;letter-spacing:.12em;padding:7px 10px;cursor:pointer}
+  .cm-btn:hover{background:#e8e6e0;color:#0b0b0b}
+  .cm-side{position:absolute;right:16px;top:68px;bottom:16px;width:330px;overflow:auto;border:1px solid rgba(232,230,224,.35);background:rgba(11,11,11,.78);backdrop-filter:blur(3px);padding:14px 16px;z-index:3}
+  .cm-k{font-size:9.5px;letter-spacing:.18em;color:#77756f;margin:14px 0 8px;display:flex;justify-content:space-between}
+  .cm-k:first-child{margin-top:0}.cm-k em{font-style:normal;letter-spacing:.08em}
+  .cm-verdict{font-family:var(--narrow);font-size:19px;line-height:1.25}
+  .cm-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(232,230,224,.25);border:1px solid rgba(232,230,224,.25);margin-top:12px}
+  .cm-stats div{background:#0b0b0b;padding:8px 10px}
+  .cm-stats small{display:block;font-size:9px;letter-spacing:.14em;color:#77756f}
+  .cm-stats b{font-family:var(--narrow);font-size:22px}
+  .cm-list button{display:grid;grid-template-columns:30px 1fr auto;gap:8px;width:100%;text-align:left;background:transparent;color:inherit;border:1px solid rgba(232,230,224,.25);padding:9px 10px;margin-bottom:6px;font:inherit;font-size:11px;cursor:pointer;align-items:start}
+  .cm-list button:hover,.cm-list button.on{border-color:#ff5a36;background:rgba(255,90,54,.08)}
+  .cm-list .n{font-family:var(--narrow);font-size:18px;color:#ff5a36}
+  .cm-list .p{font-family:var(--narrow);font-size:18px}
+  .cm-list small{display:block;color:#a9a7a0;font-size:10px;margin-top:3px;line-height:1.4}
+  .cm-list .none{font-size:11px;color:#a9a7a0;line-height:1.5}
+  .cm-legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:9.5px;letter-spacing:.1em;color:#a9a7a0}
+  .cm-legend i{display:inline-block;width:10px;height:10px;margin-right:7px;vertical-align:-1px;border:1.5px solid #e8e6e0}
+  .lg-tok{border-radius:50%}.lg-cr{transform:rotate(45deg)}.lg-w{border-color:#8f8d86!important;border-radius:50%}.lg-hot{border-color:#ff5a36!important;border-radius:50%;background:rgba(255,90,54,.3)}
+  .lg-f{border-color:#e8e6e0!important;clip-path:polygon(50% 0,100% 100%,0 100%);background:#e8e6e0}.lg-b{border-style:dashed!important}.lg-x{border-style:dotted!important;border-color:#77756f!important;border-radius:50%}.lg-in{border-color:#55534e!important}
+  .cm-note{font-size:10px;line-height:1.5;color:#77756f;margin-top:14px}
+  .cm-tip{position:absolute;z-index:4;pointer-events:none;background:#e8e6e0;color:#0b0b0b;padding:8px 10px;font-size:11px;line-height:1.45;max-width:260px;box-shadow:4px 4px 0 #ff5a36}
+  .cm-tip b{display:block;font-family:var(--narrow);font-size:15px;letter-spacing:.04em}
+  .cm-hint{position:absolute;left:18px;bottom:14px;font-size:9.5px;letter-spacing:.16em;color:#55534e;z-index:3}
+  .cm-load{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:11px;letter-spacing:.2em;color:#a9a7a0;z-index:2}
+  @media (max-width: 760px){
+    .cm-top{height:auto;flex-wrap:wrap;padding:10px 12px;gap:8px}
+    .cm-steps{order:3;flex-basis:100%;gap:10px;font-size:9px}
+    .cm-title{font-size:17px}
+    .cm-side{left:8px;right:8px;top:auto;bottom:8px;width:auto;max-height:38vh;padding:12px}
+    .cm-hint{display:none}
+  }
+</style>
+<script>
+(() => {
+  if(!window.THREE) return;
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const short = (h) => h ? h.slice(0,6) + '…' + h.slice(-4) : '?';
+  const pctS = (x) => x == null ? '—' : (x * 100 >= 10 ? (x * 100).toFixed(1) : (x * 100).toFixed(2)) + '%';
+  const toast = (m) => (window.__toast ? window.__toast(m) : null);
+  const EXP = () => ((window.OBSERV_ENV || {}).EXPLORER_URL || 'https://robinhoodchain.blockscout.com').replace(/\/(token|address)\/.*$/, '').replace(/\/$/, '');
+  const ACC = 0xff5a36, PAPER = 0xe8e6e0, DIM = 0x8f8d86, DARK = 0x55534e;
+  const root = $('#cmap'), canvas = $('#cmGl'), tip = $('#cmTip');
+
+  let renderer, scene, camera, raf = 0, data = null, token = null, objs = [], lines = [], pulses = [], focus = 0, t0 = 0;
+  const cam = {theta: .9, phi: 1.05, r: 64, tr: 64, auto: true, target: new THREE.Vector3()};
+
+  function init(){
+    if(renderer) return;
+    renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: false});
+    renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+    renderer.setClearColor(0x0b0b0b, 1);
+    scene = new THREE.Scene(); scene.fog = new THREE.Fog(0x0b0b0b, 70, 150);
+    camera = new THREE.PerspectiveCamera(45, 1, .1, 500);
+    addEventListener('resize', size);
+    // controls
+    let drag = null;
+    canvas.addEventListener('pointerdown', (e) => { drag = {x: e.clientX, y: e.clientY, th: cam.theta, ph: cam.phi, moved: false}; canvas.setPointerCapture(e.pointerId); canvas.classList.add('drag'); cam.auto = false; });
+    canvas.addEventListener('pointermove', (e) => {
+      if(drag){ const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if(Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true; cam.theta = drag.th - dx * .006; cam.phi = Math.max(.25, Math.min(2.85, drag.ph - dy * .006)); }
+      hover(e);
+    });
+    canvas.addEventListener('pointerup', (e) => { canvas.classList.remove('drag'); if(drag && !drag.moved) click(e); drag = null; });
+    canvas.addEventListener('wheel', (e) => { e.preventDefault(); cam.tr = Math.max(22, Math.min(130, cam.tr * (1 + Math.sign(e.deltaY) * .1))); }, {passive: false});
+    let pinch = 0;
+    canvas.addEventListener('touchmove', (e) => { if(e.touches.length === 2){ const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); if(pinch) cam.tr = Math.max(22, Math.min(130, cam.tr * pinch / d)); pinch = d; } }, {passive: true});
+    canvas.addEventListener('touchend', () => { pinch = 0; });
+  }
+  function size(){ if(!renderer) return; const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+
+  // ---------- scene helpers ----------
+  const mat = (color, opacity = 1) => new THREE.MeshBasicMaterial({color, wireframe: true, transparent: true, opacity});
+  const lmat = (color, opacity) => new THREE.LineBasicMaterial({color, transparent: true, opacity});
+  function clear(){
+    for(const o of [...scene.children]){ scene.remove(o); o.traverse && o.traverse((c) => { if(c.geometry) c.geometry.dispose(); if(c.material) c.material.dispose(); }); }
+    objs = []; lines = []; pulses = [];
+  }
+  function backdrop(){
+    // polar grid floor + star dust + outer ring
+    const g = new THREE.PolarGridHelper(60, 24, 10, 96, DARK, 0x262626); g.position.y = -26; g.material.transparent = true; g.material.opacity = .55; scene.add(g);
+    const pts = new Float32Array(1500 * 3); for(let i = 0; i < 1500; i++){ const r = 90 + Math.random() * 60, th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1); pts.set([r * Math.sin(ph) * Math.cos(th), r * Math.cos(ph), r * Math.sin(ph) * Math.sin(th)], i * 3); }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pts, 3));
+    scene.add(new THREE.Points(sg, new THREE.PointsMaterial({color: DIM, size: .35, transparent: true, opacity: .6})));
+  }
+  function geomFor(n){
+    const s = n.size;
+    switch(n.kind){
+      case 'token': return new THREE.IcosahedronGeometry(s, 1);
+      case 'creator': return new THREE.OctahedronGeometry(s, 0);
+      case 'funder': return new THREE.TetrahedronGeometry(s, 0);
+      case 'block': return new THREE.BoxGeometry(s * 1.6, s * 1.6, s * 1.6);
+      case 'infra': return new THREE.TorusGeometry(s, s * .28, 6, 14);
+      case 'burn': return new THREE.DodecahedronGeometry(s, 0);
+      default: return new THREE.IcosahedronGeometry(s, 0);
+    }
+  }
+  function colorFor(n){
+    if(n.kind === 'token' || n.kind === 'creator' || n.kind === 'funder' || n.kind === 'block') return n.cluster ? ACC : PAPER;
+    if(n.kind === 'infra' || n.kind === 'burn') return DARK;
+    if(n.kind === 'exited') return n.cluster ? ACC : DIM;
+    return n.cluster ? ACC : DIM;
+  }
+
+  // ---------- layout: 3D force-directed, computed up front ----------
+  function layout(nodes, edges){
+    // plain arrays (no per-step allocations) so ~150 nodes settle in well under 100 ms
+    const N = nodes.length, idx = new Map(nodes.map((n, i) => [n.id, i]));
+    const X = new Float32Array(N), Y = new Float32Array(N), Z = new Float32Array(N), vx = new Float32Array(N), vy = new Float32Array(N), vz = new Float32Array(N);
+    nodes.forEach((n, i) => {
+      if(n.kind === 'token') return;
+      const r = n.kind === 'infra' || n.kind === 'burn' ? 10 : n.kind === 'funder' || n.kind === 'block' ? 30 : 20;
+      const th = i * 2.399963; X[i] = Math.cos(th) * r; Y[i] = (i / N - .5) * 18; Z[i] = Math.sin(th) * r;
+    });
+    const L = edges.map((e) => [idx.get(e.s), idx.get(e.t), e.kind === 'hold' || e.kind === 'ghost' ? 18 : e.kind === 'block' ? 7 : 9, e.kind === 'hold' || e.kind === 'ghost' ? .012 : .06]).filter((l) => l[0] != null && l[1] != null);
+    for(let it = 0; it < 260; it++){
+      const k = 1 - it / 260;
+      vx.fill(0); vy.fill(0); vz.fill(0);
+      for(let a = 0; a < N; a++) for(let b = a + 1; b < N; b++){
+        let dx = X[a] - X[b], dy = Y[a] - Y[b], dz = Z[a] - Z[b], l2 = dx * dx + dy * dy + dz * dz;
+        if(l2 < .01){ dx = Math.random() - .5; dy = Math.random() - .5; dz = Math.random() - .5; l2 = .01; }
+        const l = Math.sqrt(l2), f = 140 / l2 * k / l;
+        vx[a] += dx * f; vy[a] += dy * f; vz[a] += dz * f; vx[b] -= dx * f; vy[b] -= dy * f; vz[b] -= dz * f;
+      }
+      for(const [a, b, rest, s] of L){ const dx = X[b] - X[a], dy = Y[b] - Y[a], dz = Z[b] - Z[a], l = Math.sqrt(dx * dx + dy * dy + dz * dz) || .01, f = (l - rest) * s / l; vx[a] += dx * f; vy[a] += dy * f; vz[a] += dz * f; vx[b] -= dx * f; vy[b] -= dy * f; vz[b] -= dz * f; }
+      for(let i = 0; i < N; i++){
+        if(nodes[i].kind === 'token'){ X[i] = Y[i] = Z[i] = 0; continue; }
+        let ax = vx[i] - X[i] * .004, ay = vy[i] - Y[i] * .004, az = vz[i] - Z[i] * .004;
+        const m = Math.sqrt(ax * ax + ay * ay + az * az); if(m > 3){ ax *= 3 / m; ay *= 3 / m; az *= 3 / m; }
+        X[i] += ax * .6; Y[i] += ay * .6; Z[i] += az * .6;
+      }
+    }
+    return nodes.map((_, i) => new THREE.Vector3(X[i], Y[i], Z[i]));
+  }
+
+  // ---------- build ----------
+  function build(d){
+    clear(); backdrop();
+    const nodes = d.nodes.map((n) => ({...n})), byId = new Map(nodes.map((n) => [n.id, n]));
+    for(const n of nodes){
+      n.size = n.kind === 'token' ? 3.4 : n.kind === 'creator' ? 1.9 : n.kind === 'funder' ? 1.3 : n.kind === 'block' ? 1.1 : n.kind === 'infra' ? 1.4 : n.kind === 'burn' ? 1.2 : n.kind === 'exited' ? .55 : .55 + Math.sqrt(Math.max(0, n.pct || 0)) * 7;
+    }
+    const pos = layout(nodes, d.edges);
+    nodes.forEach((n, i) => {
+      const grp = new THREE.Group(); grp.position.copy(pos[i]);
+      const c = colorFor(n), m = new THREE.Mesh(geomFor(n), mat(c, n.kind === 'exited' ? .35 : n.cluster || n.kind === 'token' || n.kind === 'creator' ? 1 : .8));
+      grp.add(m);
+      if(n.kind === 'token'){ const inner = new THREE.Mesh(new THREE.IcosahedronGeometry(n.size * .55, 0), mat(ACC, .9)); grp.add(inner); grp.userData.inner = inner;
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(n.size * 1.7, .04, 4, 90), mat(PAPER, .45)); ring.rotation.x = Math.PI / 2; grp.add(ring); grp.userData.ring = ring; }
+      if(n.cluster && n.kind !== 'token'){ const halo = new THREE.Mesh(new THREE.RingGeometry(n.size * 1.35, n.size * 1.45, 32), new THREE.MeshBasicMaterial({color: ACC, transparent: true, opacity: .55, side: THREE.DoubleSide})); grp.add(halo); grp.userData.halo = halo; }
+      grp.scale.setScalar(.001); grp.userData.node = n; grp.userData.mesh = m; grp.userData.delay = n.kind === 'token' ? 0 : n.kind === 'infra' || n.kind === 'burn' ? .5 : n.kind === 'creator' ? .7 : n.kind === 'wallet' ? .9 + Math.random() * .6 : n.kind === 'exited' ? 1.5 + Math.random() * .4 : 1.8 + Math.random() * .4;
+      grp.userData.spin = (Math.random() - .5) * .8;
+      scene.add(grp); objs.push(grp); n.obj = grp;
+    });
+    for(const e of d.edges){
+      const a = byId.get(e.s), b = byId.get(e.t); if(!a || !b) continue;
+      const hot = (a.cluster && a.cluster === b.cluster) || e.kind === 'creator';
+      const col = e.kind === 'hold' ? DARK : e.kind === 'ghost' ? DARK : hot ? ACC : e.kind === 'burn' ? DARK : PAPER;
+      const op = e.kind === 'hold' ? .22 : e.kind === 'ghost' ? .12 : hot ? .85 : .5;
+      const g = new THREE.BufferGeometry().setFromPoints([a.obj.position.clone(), a.obj.position.clone()]);
+      const ln = new THREE.Line(g, lmat(col, op)); scene.add(ln);
+      lines.push({ln, a: a.obj, b: b.obj, delay: Math.max(a.obj.userData.delay, b.obj.userData.delay) + .35, e, hot, a0: a, b0: b});
+      if(e.kind !== 'hold' && e.kind !== 'ghost'){
+        const p = new THREE.Mesh(new THREE.SphereGeometry(e.kind === 'fund' ? .22 : .18, 6, 6), new THREE.MeshBasicMaterial({color: hot ? ACC : PAPER}));
+        p.visible = false; scene.add(p); pulses.push({p, a: a.obj, b: b.obj, off: Math.random(), speed: e.kind === 'block' ? .5 : .32, line: lines[lines.length - 1]});
+      }
+    }
+    t0 = performance.now(); focus = 0; cam.auto = true; cam.tr = innerWidth < 760 ? 82 : 64;
+  }
+
+  // ---------- frame ----------
+  const ease = (x) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+  function frame(now){
+    raf = requestAnimationFrame(frame);
+    const t = (now - t0) / 1000;
+    if(cam.auto) cam.theta += .0016;
+    cam.r += (cam.tr - cam.r) * .08;
+    camera.position.set(cam.target.x + cam.r * Math.sin(cam.phi) * Math.cos(cam.theta), cam.target.y + cam.r * Math.cos(cam.phi), cam.target.z + cam.r * Math.sin(cam.phi) * Math.sin(cam.theta));
+    camera.lookAt(cam.target);
+    for(const o of objs){
+      const k = ease((t - o.userData.delay) / .7), n = o.userData.node;
+      const dim = focus && n.cluster !== focus && n.kind !== 'token';
+      o.scale.setScalar(Math.max(.001, k * (dim ? .7 : 1)));
+      o.userData.mesh.material.opacity = (dim ? .12 : n.kind === 'exited' ? .35 : n.cluster || n.kind === 'token' ? 1 : .8) * Math.min(1, k * 1.4);
+      o.rotation.y += .004 * (o.userData.spin + (n.kind === 'token' ? 1.2 : 0)); o.rotation.x += .002 * o.userData.spin;
+      if(o.userData.inner){ o.userData.inner.rotation.y -= .02; o.userData.inner.rotation.z += .01; o.userData.inner.scale.setScalar(1 + Math.sin(t * 2.4) * .08); }
+      if(o.userData.ring){ o.userData.ring.rotation.z += .003; }
+      if(o.userData.halo){ o.userData.halo.lookAt(camera.position); const s = 1 + ((t * .8 + o.userData.spin) % 1) * .6; o.userData.halo.scale.setScalar(s); o.userData.halo.material.opacity = (dim ? .05 : .55) * (1 - ((t * .8 + o.userData.spin) % 1)); }
+    }
+    for(const l of lines){
+      const k = ease((t - l.delay) / .8), arr = l.ln.geometry.attributes.position.array, A = l.a.position, B = l.b.position;
+      arr[0] = A.x; arr[1] = A.y; arr[2] = A.z; arr[3] = A.x + (B.x - A.x) * k; arr[4] = A.y + (B.y - A.y) * k; arr[5] = A.z + (B.z - A.z) * k;
+      l.ln.geometry.attributes.position.needsUpdate = true;
+      const dim = focus && !((l.a0.cluster === focus) && (l.b0.cluster === focus || l.b0.kind === 'token' || l.a0.kind === 'token'));
+      const base = l.e.kind === 'hold' ? .22 : l.e.kind === 'ghost' ? .12 : l.hot ? .85 : .5;
+      l.ln.material.opacity = dim ? base * .15 : base;
+    }
+    for(const p of pulses){
+      const ready = t > p.line.delay + .8; p.p.visible = ready && !(focus && !(p.line.a0.cluster === focus && p.line.b0.cluster === focus));
+      if(!ready) continue;
+      const f = (t * p.speed + p.off) % 1; p.p.position.lerpVectors(p.a.position, p.b.position, f); p.p.scale.setScalar(.6 + Math.sin(f * Math.PI) * .8);
+    }
+    renderer.render(scene, camera);
+  }
+
+  // ---------- interaction ----------
+  const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+  function pick(e){
+    const r = canvas.getBoundingClientRect(); mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(mouse, camera);
+    const hits = ray.intersectObjects(objs.map((o) => o.userData.mesh), false);
+    return hits.length ? objs.find((o) => o.userData.mesh === hits[0].object).userData.node : null;
+  }
+  const KIND = {token: 'TOKEN', creator: 'CREATOR', wallet: 'HOLDER', funder: 'FUNDER', block: 'SAME-BLOCK BUYS', infra: 'CONTRACT', burn: 'BURN ADDRESS', exited: 'EXITED BUYER'};
+  function hover(e){
+    if(!data) return;
+    const n = pick(e);
+    if(!n){ tip.hidden = true; return; }
+    const cl = n.cluster ? data.clusters.find((c) => c.id === n.cluster) : null;
+    const rows = [
+      n.kind === 'block' ? `${n.count} wallets bought in block ${n.block}` : n.id.startsWith('0x') ? short(n.id) : '',
+      n.kind === 'wallet' || n.kind === 'creator' ? `Holds ${pctS(n.pct)} of supply` : n.kind === 'exited' ? `Bought ~${pctS(n.boughtPct)} · now holds 0` : n.kind === 'token' ? (data.name || '') : n.kind === 'infra' ? (n.label || '') : '',
+      cl ? `Group #${cl.id} · ${cl.reasons.join(', ')}` : '',
+      n.id.startsWith('0x') ? '<em>click → explorer</em>' : '',
+    ].filter(Boolean);
+    tip.innerHTML = `<b>${esc(KIND[n.kind] || n.kind.toUpperCase())}${n.kind === 'token' ? ' · ' + esc(data.symbol ? '$' + data.symbol : '') : ''}</b>${rows.map((r) => `<div>${r}</div>`).join('')}`;
+    tip.hidden = false;
+    const x = Math.min(innerWidth - 280, e.clientX + 16), y = Math.min(innerHeight - 110, e.clientY + 14);
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  }
+  function click(e){
+    const n = pick(e); if(!n) return;
+    if(n.kind === 'token'){ const t = token; if(window.__openCert){ close(); window.__openCert(t); } return; }
+    if(n.id.startsWith('0x')) window.open(`${EXP()}/address/${n.id}`, '_blank', 'noopener');
+  }
+
+  // ---------- panel ----------
+  const STEPS = ['HOLDERS', 'TRANSFERS', 'FUNDERS', 'SAME-BLOCK BUYS', 'CLUSTERS'];
+  function steps(i){ $('#cmSteps').innerHTML = STEPS.map((s, k) => `<span class="${k < i ? 'ok' : k === i ? 'on' : ''}">${s}</span>`).join(''); }
+  function panel(d){
+    const s = d.summary;
+    $('#cmVerdict').textContent = s.verdict;
+    $('#cmStats').innerHTML = [
+      ['LINKED SUPPLY', pctS(s.linkedPct)], ['LARGEST GROUP', pctS(s.largestPct)],
+      ['GROUPS', s.clusters], ['HOLDERS MAPPED', `${s.analyzed}${s.holders ? ' / ' + s.holders : ''}`],
+      ['SAME-BLOCK BURSTS', s.bursts.length ? s.bursts.map((b) => b.buyers).join(' · ') : '0'], ['EXITED BUYERS', s.exited],
+    ].map(([k, v]) => `<div><small>${k}</small><b>${esc(v)}</b></div>`).join('');
+    $('#cmList').innerHTML = d.clusters.length ? d.clusters.slice(0, 12).map((c) => `<button data-c="${c.id}"><span class="n">#${c.id}</span><span>${c.wallets} wallet${c.wallets === 1 ? '' : 's'}${c.exited ? ` + ${c.exited} exited` : ''}${c.hasCreator ? ' · <b>CREATOR</b>' : ''}<small>${esc(c.reasons.join(' · '))}</small></span><span class="p">${pctS(c.pct)}</span></button>`).join('') : '<div class="none">No linked wallet groups among the mapped holders. That is a good sign, not a guarantee.</div>';
+    document.querySelectorAll('#cmList [data-c]').forEach((b) => b.onclick = () => {
+      const id = +b.dataset.c; focus = focus === id ? 0 : id;
+      document.querySelectorAll('#cmList [data-c]').forEach((x) => x.classList.toggle('on', +x.dataset.c === focus));
+      if(focus){ const pts = objs.filter((o) => o.userData.node.cluster === focus).map((o) => o.position); const c = pts.reduce((a, p) => a.add(p), new THREE.Vector3()).multiplyScalar(1 / Math.max(1, pts.length)); cam.target.copy(c.multiplyScalar(.6)); cam.tr = 42; }
+      else { cam.target.set(0, 0, 0); cam.tr = 64; }
+    });
+    $('#cmNote').textContent = d.note + (d.fullHistory ? '' : ' Older transfers beyond the scanned window are not included.');
+  }
+
+  // ---------- open / close ----------
+  async function open(ca){
+    ca = String(ca || '').toLowerCase(); if(!/^0x[0-9a-f]{40}$/.test(ca)) return;
+    token = ca; data = null; init();
+    root.hidden = false; document.body.style.overflow = 'hidden'; size();
+    $('#cmSym').textContent = '/ ' + short(ca); $('#cmVerdict').textContent = 'Mapping wallets around this token…'; $('#cmStats').innerHTML = ''; $('#cmList').innerHTML = ''; tip.hidden = true;
+    clear(); backdrop();
+    // loading orb while the server builds the graph
+    const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(4, 1), mat(PAPER, .8)); scene.add(orb); objs = [];
+    let si = 0; steps(0); const stepT = setInterval(() => { si = Math.min(STEPS.length - 1, si + 1); steps(si); }, 1100);
+    cancelAnimationFrame(raf); t0 = performance.now();
+    const spin = () => { if(data) return; orb.rotation.y += .02; orb.rotation.x += .01; orb.scale.setScalar(1 + Math.sin(performance.now() / 300) * .06); cam.theta += .003; camera.position.set(cam.r * Math.sin(cam.phi) * Math.cos(cam.theta), cam.r * Math.cos(cam.phi), cam.r * Math.sin(cam.phi) * Math.sin(cam.theta)); camera.lookAt(0, 0, 0); renderer.render(scene, camera); raf = requestAnimationFrame(spin); };
+    cam.r = cam.tr = 40; spin();
+    try {
+      const r = await fetch('/api/cluster/' + ca, {headers: window.__passHeader ? window.__passHeader() : {}});
+      const j = await r.json(); if(!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
+      if(token !== ca) return;
+      data = j; clearInterval(stepT); steps(STEPS.length);
+      $('#cmSym').textContent = `/ $${j.symbol || '?'} · ${short(ca)}`;
+      cancelAnimationFrame(raf); build(j); panel(j); raf = requestAnimationFrame(frame);
+    } catch(e){
+      clearInterval(stepT); $('#cmVerdict').textContent = '⚠ ' + e.message; data = null;
+    }
+  }
+  function close(){
+    root.hidden = true; document.body.style.overflow = ''; cancelAnimationFrame(raf); raf = 0; token = null; focus = 0; cam.target.set(0, 0, 0);
+    if(location.hash.startsWith('#cluster=')) history.replaceState(null, '', location.pathname + location.search);
+  }
+  $('#cmX').onclick = close;
+  addEventListener('keydown', (e) => { if(e.key === 'Escape' && !root.hidden) close(); });
+  $('#cmLink').onclick = async () => { const u = location.origin + '/#cluster=' + token; try { await navigator.clipboard.writeText(u); toast('Link copied'); } catch(_){ toast(u); } };
+  const fromHash = () => { const m = location.hash.match(/^#cluster=(0x[0-9a-fA-F]{40})$/); if(m) open(m[1]); };
+  addEventListener('hashchange', fromHash); setTimeout(fromHash, 1600);
+  window.__openCluster = open;
+})();
+</script>
+
 </body>
 </html>
 

@@ -11,6 +11,7 @@ const registry = require("./lib/registry");
 const { createThreat } = require("./lib/threat");
 const { createAI } = require("./lib/ai");
 const { createWatch } = require("./lib/watch");
+const { createCluster } = require("./lib/cluster");
 
 const env = (k, d = "") => (process.env[k] == null || process.env[k] === "" ? d : process.env[k]);
 const CFG = {
@@ -407,6 +408,7 @@ const { createHolder } = require("./lib/holder");
 const holder = createHolder({ env, site: SITE });
 const watch = createWatch({ env, rpc: swaptest.rpc, keccak256: swaptest.keccak256, launchpads, threat, holder, site: SITE });
 watch.start();
+const cluster = createCluster({ env, rpc: swaptest.rpc, threat });
 
 // ---------------------------------------------------------------- HTTP
 const PUB = path.join(__dirname, "public");
@@ -440,6 +442,7 @@ function routeScan(req, res, u, p, tail) {
   if (p.startsWith("/api/genesis/")) { if (!isAddr(tail)) return send(res, 400, { error: "send a 0x contract address" }); return json(res, genesis(tail)); }
   if (p.startsWith("/api/threat/")) { if (!isAddr(tail)) return send(res, 400, { error: "send a 0x contract address" }); return json(res, threat.scan(tail, { force: u.searchParams.get("fresh") === "1" })); }
   if (p.startsWith("/api/tx/")) { if (!/^0x[0-9a-fA-F]{64}$/.test(tail)) return send(res, 400, { error: "send a 0x transaction hash (64 hex characters)" }); return json(res, decodeTx(lc(tail))); }
+  if (p.startsWith("/api/cluster/")) { if (!isAddr(tail)) return send(res, 400, { error: "send a 0x contract address" }); return json(res, cluster.map(lc(tail))); }
   if (p.startsWith("/api/swaptest/")) { if (!isAddr(tail)) return send(res, 400, { error: "bad address" }); return json(res, swapTestToken(tail, Math.min(1e5, Math.max(1, +u.searchParams.get("usd") || 50)))); }
   send(res, 404, { error: "not found" });
 }
@@ -486,6 +489,8 @@ const server = http.createServer((req, res) => {
     }).catch((e) => send(res, 500, { error: String(e.message || e) }));
     return;
   }
+  if (/^\/api\/cluster\//.test(p) && !cluster.cached(tail) && heavyLimited(clientIp(req))) return send(res, 429, { error: "Too many scans — wait a minute." });
+  if (/^\/api\/cluster\//.test(p)) return routeScan(req, res, u, p, tail);
   if (/^\/api\/(genesis|threat|tx|swaptest)\//.test(p) && !threat.cached(tail) && heavyLimited(clientIp(req))) return send(res, 429, { error: "Too many scans — wait a minute." });
   if (/^\/api\/(genesis|threat|tx|swaptest)\//.test(p)) return routeScan(req, res, u, p, tail);
   if (p === "/api/launchpads") return send(res, 200, launchpads.status());
